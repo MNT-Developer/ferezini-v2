@@ -2,7 +2,7 @@
 
 > **Data:** 11/11/2026  
 > **Finalidade:** registrar as melhorias e os ajustes realizados em relação à especificação inicial.  
-> **Documento de origem:** [`.codex/v1.md`](../.codex/v1.md), também preservado em [`codex/IMPLEMENTACAO_V1.md`](IMPLEMENTACAO_V1.md).  
+> **Documento de origem:** [`./codex/v.0.0.1.md`](v.0.0.1.md), também preservado em [`codex/v.0.0.1.md`](v.0.0.1.md).  
 > **Idioma:** português brasileiro (`pt-BR`).
 
 Este documento complementa a especificação V1 e registra o comportamento implementado até esta revisão. As alterações de interface solicitadas posteriormente prevalecem nos pontos indicados abaixo. As demais regras da V1 continuam aplicáveis.

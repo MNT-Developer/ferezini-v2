@@ -1,7 +1,7 @@
 # Ferezini — Gestão Financeira de Obras
 
 > **Especificação de implementação V1 para Codex**  
-> **Destino no repositório:** `./codex/IMPLEMENTACAO_V1.md`  
+> **Destino no repositório:** `./codex/v.0.0.1.md`  
 > **Idioma do produto, mensagens, testes de interface e documentação:** português brasileiro (`pt-BR`).  
 > **Objetivo:** implementar uma primeira versão funcional de um sistema Django para controlar orçamentos, despesas e envios de despesas por obra, com visual clean e execução multiplataforma (Windows e Linux).
 
@@ -62,7 +62,7 @@ templates/ static/ docs/ tests/ utils/
 scripts/windows/{instalar.ps1,iniciar.ps1,instalar_servico.ps1,configurar_agendador.ps1}
 scripts/linux/{instalar.sh,iniciar.sh,gestao-obras.service,gestao-obras-email.service,gestao-obras-email.timer}
 requirements/ .env.example manage.py
-codex/IMPLEMENTACAO_V1.md
+codex/v.0.0.1.md
 ```
 
 Organização: views somente com handlers HTTP; funções auxiliares específicas em `apps/<app>/utils.py` e funções genéricas na coleção `utils/*.py` da raiz. Separar serviços transacionais quando tecnicamente justificado; evitar camadas artificiais. Configurações separadas para desenvolvimento e produção. Criar um usuário Django customizado **antes da migração inicial**. Não usar `runserver` em produção.
