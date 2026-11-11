@@ -155,6 +155,14 @@ def estrutura_projeto(projeto, exibir_inativos=False):
                 dados_itens[item.pk]["despesas"].append(serializar_registro(despesa))
             else:
                 etapa_dados["despesas"].append(serializar_registro(despesa))
+        demais_realizado = sum((
+            despesa["valor"] for despesa in etapa_dados["despesas"]
+            if etapa.ativo and despesa["ativo"] and despesa["valor"] is not None
+        ), Decimal("0.00"))
+        etapa_dados["resumo_demais_despesas"] = {
+            "id": etapa.pk, "orcado": Decimal("0.00"),
+            "realizado": demais_realizado, "saldo": -demais_realizado,
+        }
         estrutura["etapas"].append(etapa_dados)
     # A mesma representação é usada no HTML e no Fetch, inclusive para datas e Decimal.
     return json.loads(json.dumps(estrutura, cls=DjangoJSONEncoder))

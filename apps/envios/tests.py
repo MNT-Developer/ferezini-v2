@@ -22,6 +22,7 @@ from apps.despesas.models import Despesa
 from apps.projetos.models import Etapa, Projeto, ProjetoEmail
 
 from .models import LoteEnvioDespesa, LoteEnvioItem, LoteEnvioTentativa
+from .forms import PrepararLoteForm
 from .utils import (
     calcular_taxa_servico, confirmar_lote, despesas_elegiveis, finalizar_tentativa,
     gerar_pdf_lote, processar_tentativa, recuperar_reservas_expiradas,
@@ -49,6 +50,32 @@ class EnviosFixture:
 
 
 class LotesTestes(EnviosFixture, TestCase):
+    def test_formulario_inicia_com_taxa_das_despesas_marcadas(self):
+        self.despesa("100.10")
+        self.despesa("200.20")
+        form = PrepararLoteForm(self.projeto)
+        self.assertEqual(form.fields["valor_taxa"].initial, Decimal("31.53"))
+        self.assertEqual(form.valor_despesas, Decimal("300.30"))
+        self.client.force_login(self.usuario)
+        resposta = self.client.get(reverse("envios:painel", args=[self.projeto.pk]))
+        self.assertContains(resposta, 'value="31,53"')
+        self.assertContains(resposta, 'id="justificativa-taxa" hidden')
+        self.assertContains(resposta, 'js/envios.js')
+
+    def test_taxa_editada_exige_justificativa_no_servidor(self):
+        despesa = self.despesa("100")
+        dados = {"despesas": [str(despesa.pk)], "modalidade": "GERAR", "valor_taxa": "9,00"}
+        form = PrepararLoteForm(self.projeto, data=dados)
+        self.assertFalse(form.is_valid())
+        self.assertIn("justificativa_taxa", form.errors)
+        dados["justificativa_taxa"] = "Desconto aprovado"
+        form = PrepararLoteForm(self.projeto, data=dados)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["valor_taxa"], Decimal("9.00"))
+        dados["valor_taxa"] = "10,50"
+        dados["justificativa_taxa"] = ""
+        self.assertTrue(PrepararLoteForm(self.projeto, data=dados).is_valid())
+
     def test_ids_fracionarios_e_justificativa_invalida_sao_rejeitados(self):
         despesa = self.despesa()
         for ids in ([float(despesa.pk) + 0.5], [True], [str(despesa.pk) + ".0"]):
@@ -178,7 +205,8 @@ class LotesTestes(EnviosFixture, TestCase):
             conteudo = gerar_pdf_lote(lote)
         self.assertTrue(conteudo.startswith(b"%PDF"))
         html.return_value.write_pdf.assert_called_once_with()
-        self.assertIn("Taxa aplicada", html.call_args.kwargs["string"])
+        self.assertIn("<dt>Taxa</dt>", html.call_args.kwargs["string"])
+        self.assertNotIn("<dt>Taxa calculada</dt>", html.call_args.kwargs["string"])
         self.assertIn("Fornecedor", html.call_args.kwargs["string"])
 
     def test_pdf_indisponivel_retorna_503_amigavel(self):

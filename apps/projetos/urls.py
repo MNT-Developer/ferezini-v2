@@ -9,6 +9,7 @@ urlpatterns = [
     path("novo/", views.novo, name="novo"),
     path("<int:pk>/", views.detalhe, name="detalhe"),
     path("<int:pk>/editar/", views.editar, name="editar"),
+    path("<int:pk>/etapas/<int:etapa_id>/orcamento/", views.orcamento_etapa, name="orcamento_etapa"),
     path("<int:pk>/historico/", views.historico, name="historico"),
     path("<int:pk>/dados/", views.dados, name="dados"),
     path("<int:pk>/linhas/", views.nova_linha, name="nova_linha"),

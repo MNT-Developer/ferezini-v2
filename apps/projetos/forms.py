@@ -1,8 +1,17 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from .models import Projeto
+
+
+class PercentualInput(forms.NumberInput):
+    def format_value(self, value):
+        if isinstance(value, (Decimal, int)):
+            return format(Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), ".2f")
+        return super().format_value(value)
 
 
 class ProjetoForm(forms.ModelForm):
@@ -27,6 +36,7 @@ class ProjetoForm(forms.ModelForm):
             "taxa_servico": "Taxa (%)",
         }
         widgets = {
+            "taxa_servico": PercentualInput(attrs={"step": "0.01"}),
             "descricao": forms.Textarea(attrs={"rows": 3}), "endereco_obra": forms.Textarea(attrs={"rows": 3}),
             "data_inicio": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
             "previsao_termino": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),

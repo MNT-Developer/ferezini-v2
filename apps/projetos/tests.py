@@ -52,6 +52,43 @@ class FinanceiroTests(TestCase):
         self.assertEqual(projeto.status, Projeto.Status.EM_ANDAMENTO)
         self.assertEqual(projeto.descricao, "Observação da obra")
 
+    def test_nova_etapa_indica_tela_exclusiva_sem_criar_item_vazio(self):
+        self.client.force_login(self.usuario)
+        resposta = self.client.post(reverse("projetos:nova_linha", args=[self.projeto.pk]),
+                                   json.dumps({"tipo": "etapa", "titulo": "Acabamento"}),
+                                   content_type="application/json")
+        self.assertEqual(resposta.status_code, 201)
+        dados = resposta.json()
+        etapa = Etapa.objects.get(pk=dados["registro"]["id"])
+        self.assertEqual(dados["url_orcamento"], reverse("projetos:orcamento_etapa", args=[self.projeto.pk, etapa.pk]))
+        pagina = self.client.get(dados["url_orcamento"])
+        self.assertContains(pagina, 'data-etapa-id="%s"' % etapa.pk)
+        self.assertContains(pagina, "Orçamento da etapa")
+        self.assertNotContains(pagina, 'id="new-stage"')
+        self.assertFalse(etapa.orcamentos.exists())
+        item = self.client.post(reverse("projetos:nova_linha", args=[self.projeto.pk]),
+                                json.dumps({"tipo": "orcamento", "etapa": etapa.pk}),
+                                content_type="application/json")
+        self.assertEqual(item.status_code, 201)
+        self.assertTrue(item.json()["registro"]["rascunho"])
+        self.assertEqual(etapa.orcamentos.count(), 1)
+
+    def test_tela_orcamento_etapa_protegida_e_limitada_ao_projeto(self):
+        url = reverse("projetos:orcamento_etapa", args=[self.projeto.pk, self.etapa.pk])
+        self.assertEqual(self.client.get(url).status_code, 302)
+        sem_permissao = get_user_model().objects.create_user("sem_permissao")
+        self.client.force_login(sem_permissao)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.client.force_login(self.usuario)
+        outro = Projeto.objects.create(nome="Outro projeto", criado_por=self.usuario)
+        self.assertEqual(self.client.get(reverse("projetos:orcamento_etapa", args=[outro.pk, self.etapa.pk])).status_code, 404)
+        self.etapa.ativo = False
+        self.etapa.save()
+        resposta = self.client.get(url)
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'id="show-inactive" checked')
+        self.assertFalse(resposta.context["dados"]["etapas"][0]["ativo"])
+
     def test_edicao_preserva_status_e_formulario_com_rotulos_novos(self):
         self.projeto.status = Projeto.Status.CONCLUIDO
         self.projeto.save()
@@ -157,10 +194,40 @@ class FinanceiroTests(TestCase):
         self.assertEqual(len(dados["etapas"][0]["despesas"]), 1)
         self.assertEqual(dados["totais"]["realizado"], "50.00")
         self.assertEqual(dados["totais"]["orcado"], "0.00")
+        self.assertEqual(dados["etapas"][0]["resumo_demais_despesas"]["realizado"], "50.00")
         alterar_ativo(self.usuario, "orcamento", item.pk, True, item.versao, "Retomar previsão")
         dados = estrutura_projeto(self.projeto)
         self.assertEqual(len(dados["etapas"][0]["itens"][0]["despesas"]), 1)
         self.assertEqual(len(dados["etapas"][0]["despesas"]), 0)
+        self.assertEqual(Decimal(dados["etapas"][0]["resumo_demais_despesas"]["realizado"]), Decimal("0"))
+
+    def test_demais_despesas_somam_ativos_rascunhos_e_itens_inativos_sem_duplicar(self):
+        item = self.item()
+        inativo = self.item(ativo=False)
+        self.despesa(orcamento=item, valor=Decimal("50"))
+        avulsa = self.despesa(valor=Decimal("20.25"))
+        self.despesa(orcamento=inativo, valor=Decimal("30.10"))
+        self.despesa(fornecedor="", valor=Decimal("12"))
+        self.despesa(ativo=False, valor=Decimal("100"))
+        self.despesa(valor=None)
+        for mostrar_inativos in (False, True):
+            dados = estrutura_projeto(self.projeto, exibir_inativos=mostrar_inativos)
+            etapa = dados["etapas"][0]
+            resumo = etapa["resumo_demais_despesas"]
+            self.assertEqual(Decimal(resumo["orcado"]), Decimal("0"))
+            self.assertEqual(Decimal(resumo["realizado"]), Decimal("62.35"))
+            self.assertEqual(Decimal(resumo["saldo"]), Decimal("-62.35"))
+            self.assertEqual(Decimal(etapa["realizado"]), Decimal("112.35"))
+            self.assertEqual(Decimal(dados["totais"]["realizado"]), Decimal("112.35"))
+        self.client.force_login(self.usuario)
+        resposta = self.client.patch(
+            reverse("projetos:atualizar_linha", args=[self.projeto.pk, "despesa", avulsa.pk]),
+            json.dumps({"campo": "valor", "valor": "25.00", "versao": avulsa.versao}),
+            content_type="application/json",
+        )
+        self.assertEqual(resposta.status_code, 200)
+        resumo = resposta.json()["dados"]["etapas"][0]["resumo_demais_despesas"]
+        self.assertEqual(Decimal(resumo["realizado"]), Decimal("67.10"))
 
     def test_inativos_bloqueiam_edicao(self):
         item = self.item(ativo=False)

@@ -2,8 +2,9 @@
 (() => {
   const sheet = document.getElementById("project-sheet");
   if (!sheet) return;
+  const exclusiveStageId = Number(sheet.dataset.etapaId) || null;
   let data = JSON.parse(document.getElementById("projeto-dados").textContent);
-  let tab = new URLSearchParams(location.search).get("aba") === "orcamento" ? "orcamento" : "geral";
+  let tab = exclusiveStageId || new URLSearchParams(location.search).get("aba") === "orcamento" ? "orcamento" : "geral";
   let operations = Promise.resolve();
   const content = document.getElementById("sheet-content");
   const status = document.getElementById("save-status");
@@ -13,6 +14,7 @@
   const expanded = new Map();
   const {formatarMoeda, compararDecimais} = globalThis.FereziniFormatacao;
   const decimal = new Intl.NumberFormat("pt-BR", {maximumFractionDigits: 4});
+  const percentual = new Intl.NumberFormat("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const collator = new Intl.Collator("pt-BR", {sensitivity: "base", numeric: true});
   const expenseFields = [
     ["fornecedor", "Fornecedor", "text"], ["descricao", "Descrição", "text"],
@@ -39,6 +41,7 @@
   function record(type, id) {
     for (const stage of data.etapas) {
       if (type === "etapa" && stage.id === Number(id)) return stage;
+      if (type === "demais_despesas" && stage.id === Number(id)) return stage.resumo_demais_despesas;
       for (const item of stage.itens) {
         if (type === "orcamento" && item.id === Number(id)) return item;
         if (type === "despesa") {
@@ -306,7 +309,7 @@
 
   function trackedDetails(key, className) {
     const details = element("details", className);
-    details.open = expanded.has(key) ? expanded.get(key) : true;
+    details.open = expanded.has(key) ? expanded.get(key) : Boolean(exclusiveStageId);
     details.addEventListener("toggle", () => expanded.set(key, details.open));
     return details;
   }
@@ -371,7 +374,7 @@
     }
     const general = trackedDetails(`geral-${stage.id}`, "item-section");
     const heading = element("summary");
-    heading.append(element("span", "group-title", "Área geral da etapa"), element("span", "group-subtitle", "Despesas sem item ativo"));
+    heading.append(element("span", "group-title", "Demais Despesas"), element("span", "group-subtitle", "Despesas sem item ativo"), groupTotals("demais_despesas", stage.resumo_demais_despesas));
     general.append(heading, expenseTable(stage.despesas, stage), addExpense(stage)); inner.append(general);
     group.append(inner); return group;
   }
@@ -401,7 +404,7 @@
 
   function budgetStage(stage) {
     const group = trackedDetails(`orcamento-etapa-${stage.id}`, `group${stage.ativo ? "" : " inactive"}`);
-    draggable(group, "etapa", stage.id, data.projeto.id);
+    if (!exclusiveStageId) draggable(group, "etapa", stage.id, data.projeto.id);
     const summary = element("summary");
     const handle = element("span", "drag-handle", "⠿"); handle.title = "Arraste para reorganizar etapa";
     summary.append(handle);
@@ -414,10 +417,8 @@
     summary.append(groupTotals("etapa", stage, ["orcado"]));
     const actions = element("div", "group-actions");
     actions.append(historyLink("etapa", stage.id), button(stage.ativo ? "Inativar" : "Reativar", "btn btn-quiet", () => changeState("etapa", stage)));
-    if (stage.ativo) actions.append(button("Restaurar itens A–Z", "btn btn-quiet", () => mutate("ordem/", {tipo: "orcamento", etapa: stage.id, restaurar: true})), button("+ Item", "btn btn-outline", async () => {
-      const result = await mutate("linhas/", {tipo: "orcamento", etapa: stage.id});
-      if (result?.registro) content.querySelector(`input[data-type="orcamento"][data-id="${result.registro.id}"][data-field="descricao"]`)?.focus();
-    }));
+    if (!exclusiveStageId) actions.append(stageBudgetLink(stage, "Abrir orçamentos"));
+    if (stage.ativo) actions.append(button("Restaurar itens A–Z", "btn btn-quiet", () => mutate("ordem/", {tipo: "orcamento", etapa: stage.id, restaurar: true})));
     summary.append(actions); group.append(summary);
     const description = element("div", "stage-description group-inner");
     const descriptionLabel = element("label", "muted", "Descrição da etapa");
@@ -436,7 +437,29 @@
       const actionCell = element("td"); actionCell.append(actionsFor("orcamento", item, stage.ativo)); tr.append(actionCell); body.append(tr);
     }
     if (!stage.itens.length) { const tr = element("tr"); const td = element("td", "muted", "Adicione itens para começar a preencher o orçamento desta etapa."); td.colSpan = 8; tr.append(td); body.append(tr); }
-    table.append(body); wrap.append(table); group.append(wrap); return group;
+    table.append(body); wrap.append(table); group.append(wrap);
+    if (stage.ativo) {
+      const add = element("div", "add-expense group-inner");
+      add.append(button("+ Adicionar orçamento", "btn btn-primary btn-sm", async () => {
+        expanded.set(`orcamento-etapa-${stage.id}`, true);
+        const result = await mutate("linhas/", {tipo: "orcamento", etapa: stage.id});
+        if (result?.registro) content.querySelector(`input[data-type="orcamento"][data-id="${result.registro.id}"][data-field="descricao"]`)?.focus();
+      }));
+      group.append(add);
+    }
+    return group;
+  }
+
+  function stageBudgetLink(stage, text) {
+    const link = element("a", "btn btn-outline btn-sm", text);
+    link.href = `${sheet.dataset.base}etapas/${stage.id}/orcamento/`;
+    link.addEventListener("click", async event => {
+      event.stopPropagation();
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (await beforeRender()) location.assign(link.href);
+    });
+    return link;
   }
 
   function feeGroup() {
@@ -452,7 +475,7 @@
       for (const fee of data.taxas) {
         const row = element("tr");
         const date = fee.data_envio ? new Intl.DateTimeFormat("pt-BR", {dateStyle: "short", timeZone: "America/Sao_Paulo"}).format(new Date(fee.data_envio)) : "—";
-        for (const val of [`Lote #${fee.id}`, date, `${decimal.format(Number(fee.percentual_taxa))}%`, currency(fee.valor_taxa), currency(fee.valor_taxa), currency("0")]) row.append(element("td", "", val));
+        for (const val of [`Lote #${fee.id}`, date, `${percentual.format(Number(fee.percentual_taxa))}%`, currency(fee.valor_taxa), currency(fee.valor_taxa), currency("0")]) row.append(element("td", "", val));
         body.append(row);
       }
       table.append(body); wrap.append(table); group.append(wrap);
@@ -513,19 +536,22 @@
   function render() {
     content.replaceChildren();
     document.querySelectorAll("[data-tab]").forEach(node => node.classList.toggle("active", node.dataset.tab === tab));
-    document.getElementById("sheet-title").textContent = tab === "geral" ? "Visão geral" : "Orçamento da obra";
-    document.getElementById("sheet-description").textContent = tab === "geral" ? "Do previsto ao realizado, por etapa da obra." : "Preencha as células. Arraste etapas e itens para reorganizar.";
+    document.getElementById("sheet-title").textContent = exclusiveStageId ? "Orçamento da etapa" : tab === "geral" ? "Visão geral" : "Orçamento da obra";
+    document.getElementById("sheet-description").textContent = exclusiveStageId ? "Adicione orçamentos abaixo e preencha as células. Arraste os itens para reorganizar." : tab === "geral" ? "Do previsto ao realizado, por etapa da obra." : "Preencha as células. Arraste etapas e itens para reorganizar.";
     document.getElementById("expense-filters").hidden = tab !== "geral";
     if (tab === "geral") content.append(feeGroup());
-    else if (data.etapas.length) {
+    else if (data.etapas.length && !exclusiveStageId) {
       const actions = element("div", "actions mb-3");
       actions.append(button("Restaurar etapas A–Z", "btn btn-outline btn-sm", () => mutate("ordem/", {tipo: "etapa", restaurar: true})));
       content.append(actions);
     }
     const stages = element("div", "stages");
-    for (const stage of data.etapas) stages.append(tab === "geral" ? generalStage(stage) : budgetStage(stage));
+    const visibleStages = exclusiveStageId ? data.etapas.filter(stage => stage.id === exclusiveStageId) : data.etapas;
+    for (const stage of visibleStages) stages.append(tab === "geral" ? generalStage(stage) : budgetStage(stage));
     content.append(stages);
-    if (!data.etapas.length) {
+    if (exclusiveStageId && !visibleStages.length) {
+      content.append(element("div", "notice", "Esta etapa está inativa. Marque Exibir itens excluídos para consultá-la."));
+    } else if (!data.etapas.length) {
       const empty = element("div", "card empty-state");
       empty.append(element("span", "", "▦"), element("h3", "", "Uma obra começa pelas etapas"), element("p", "", "Crie a primeira etapa para adicionar itens previstos e registrar despesas."), button("+ Criar primeira etapa", "btn btn-primary", newStage));
       content.append(empty);
@@ -538,7 +564,10 @@
     const dialog = document.getElementById("stage-dialog"), input = document.getElementById("stage-input");
     input.value = "";
     dialog.addEventListener("close", async () => {
-      if (dialog.returnValue === "confirm" && input.value.trim()) await mutate("linhas/", {tipo: "etapa", titulo: input.value.trim()});
+      if (dialog.returnValue === "confirm" && input.value.trim()) {
+        const result = await mutate("linhas/", {tipo: "etapa", titulo: input.value.trim()});
+        if (result?.url_orcamento) location.assign(result.url_orcamento);
+      }
     }, {once: true});
     dialog.returnValue = "";
     dialog.showModal(); input.focus();
@@ -556,7 +585,7 @@
     try { data = await enqueue(() => api("dados/")); render(); }
     catch (error) { inactive.checked = !inactive.checked; window.fereziniToast(error.message, true); }
   });
-  document.getElementById("new-stage").addEventListener("click", newStage);
+  document.getElementById("new-stage")?.addEventListener("click", newStage);
   document.getElementById("clear-filters").addEventListener("click", () => { filters.clear(); applyExpenseView(); });
   window.addEventListener("beforeunload", event => { if (needsResolution()) { event.preventDefault(); event.returnValue = ""; } });
   render();

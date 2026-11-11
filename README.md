@@ -105,11 +105,11 @@ Falhas confirmadas têm até três reenvios, três horas depois de cada falha. R
 
 ## Uso e regras principais
 
-1. Cadastre projetos, contatos e percentual de taxa. Na aba Orçamento, crie etapas e itens.
+1. Cadastre projetos, contatos e percentual de taxa. Ao criar uma etapa, sua tela exclusiva de orçamento abre automaticamente. Use **Adicionar orçamento** dentro da etapa para incluir itens; na aba Orçamento, **Abrir orçamentos** permite voltar à tela exclusiva de qualquer etapa.
 2. Edite uma célula e pressione Enter/Tab ou saia dela; aguarde a confirmação “Salvo”. Em erro, use Tentar novamente ou Reverter. Conflito de versão exige atualização consciente dos dados.
 3. Na aba Geral, adicione despesas na etapa ou em um item. Valor válido entra no realizado mesmo em rascunho; só fornecedor preenchido e valor positivo tornam a despesa elegível para lote.
 4. Arraste etapas/itens na aba Orçamento para ordenar e use Restaurar A–Z para remover a personalização. Filtros e cabeçalhos de despesas afetam apenas apresentação; indicadores e subtotais continuam oficiais.
-5. Envio de Despesas pré-seleciona elegíveis. Revise a prévia e confirme. A taxa incide sobre todas as despesas selecionadas; ajuste exige justificativa antes da confirmação. O lote confirmado é imutável.
+5. Envio de Despesas pré-seleciona elegíveis e calcula a taxa na tela. Marcar ou desmarcar despesas recalcula a taxa e descarta ajuste e justificativa anteriores. Editar a taxa revela a justificativa obrigatória quando diferente do cálculo. Revise a prévia e confirme; o lote confirmado é imutável.
 6. Consulte HTML/PDF e tentativas no histórico de lotes. O relatório por período usa datas inclusivas de confirmação dos lotes no fuso de São Paulo e valores dos snapshots.
 
 Não há exclusão física pela aplicação. Despesa inativa requer justificativa; reativação sempre exige observação. Item que já teve despesa exige justificativa para alterações. Inativar item mantém suas despesas e vínculos, exibindo-as na área geral da etapa. Etapa com despesas ativas não pode ser inativada. Histórico registra operador, horário, antes/depois e correlação.
@@ -120,7 +120,7 @@ Não há exclusão física pela aplicação. Despesa inativa requer justificativ
 ./.venv/Scripts/python.exe manage.py test --settings=config.settings.test
 ./.venv/Scripts/python.exe manage.py check --settings=config.settings.test
 ./.venv/Scripts/python.exe manage.py makemigrations --check --dry-run --settings=config.settings.test
-node --test tests/formatacao.test.cjs
+node --test tests/formatacao.test.cjs tests/envios.test.cjs
 ```
 
 Para testar em MySQL/MariaDB, configure `DB_*` para um banco exclusivo de testes e defina `TEST_MYSQL=true` antes do comando. O Django cria o banco `test_<DB_NAME>`; forneça a conta de teste com privilégios CREATE/DROP nesse banco. Nunca use um banco real com `--keepdb` sem controle. Testes de concorrência com SELECT FOR UPDATE são ignorados em SQLite e devem passar no banco de produção alvo antes da homologação.

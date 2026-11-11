@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.accounts.permissions import exigir_permissao
@@ -78,6 +79,19 @@ def detalhe(request, pk):
     return render(request, "projetos/detalhe.html", {"projeto": projeto, "dados": dados, "totais": dados["totais"]})
 
 
+@login_required
+@require_GET
+def orcamento_etapa(request, pk, etapa_id):
+    exigir_permissao(request.user, "projetos")
+    projeto = get_object_or_404(consultar_projetos(), pk=pk)
+    etapa = get_object_or_404(Etapa, pk=etapa_id, projeto=projeto)
+    dados = estrutura_projeto(projeto, exibir_inativos=not etapa.ativo or request.GET.get("inativos") == "1")
+    return render(request, "projetos/detalhe.html", {
+        "projeto": projeto, "dados": dados, "totais": dados["totais"],
+        "etapa_orcamento": etapa,
+    })
+
+
 @require_GET
 @api_financeira
 def dados(request, pk):
@@ -91,7 +105,10 @@ def nova_linha(request, pk):
     dados = ler_json(request)
     tipo = dados.pop("tipo", "")
     registro = criar_registro(request.user, tipo, pk, **dados)
-    return JsonResponse({"registro": serializar_registro(registro), "dados": estrutura_projeto(Projeto.objects.get(pk=pk), request.GET.get("inativos") == "1")}, status=201)
+    resposta = {"registro": serializar_registro(registro), "dados": estrutura_projeto(Projeto.objects.get(pk=pk), request.GET.get("inativos") == "1")}
+    if tipo == "etapa":
+        resposta["url_orcamento"] = reverse("projetos:orcamento_etapa", kwargs={"pk": pk, "etapa_id": registro.pk})
+    return JsonResponse(resposta, status=201)
 
 
 @require_http_methods(["PATCH"])

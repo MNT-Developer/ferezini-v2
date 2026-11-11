@@ -1,20 +1,24 @@
 {% extends "base.html" %}
-{% load l10n %}
+{% load l10n static %}
 {% block title %}Envio de Despesas · {{ projeto.nome }}{% endblock %}
 {% block content %}
 {% include "envios/_projeto_nav.html" with area="envios" %}
 <nav class="tabs" aria-label="Envios"><a class="tab active" href="#pendentes">Pendentes</a><a class="tab" href="#historico-lotes">Histórico de Lotes</a></nav>
-<section class="card" id="pendentes"><div class="card-body"><div class="page-heading"><div><h2>Preparar envio</h2><p class="muted">Selecione as despesas e confira os valores antes de confirmar o lote.</p></div><span class="badge">Taxa padrão: {{ projeto.taxa_servico }}%</span></div>
-<form method="post" action="{% url 'envios:preparar' projeto.pk %}" id="preparar-lote">{% csrf_token %}{{ form.non_field_errors }}{{ form.despesas.errors }}
+<section class="card" id="pendentes"><div class="card-body"><div class="page-heading"><div><h2>Preparar envio</h2><p class="muted">Selecione as despesas e confira os valores antes de confirmar o lote.</p></div><span class="badge">Taxa padrão: {{ projeto.taxa_servico|floatformat:2 }}%</span></div>
+<form method="post" action="{% url 'envios:preparar' projeto.pk %}" id="preparar-lote" data-percentual="{{ projeto.taxa_servico|unlocalize }}" data-bound="{{ form.is_bound|yesno:'true,false' }}">{% csrf_token %}{{ form.non_field_errors }}{{ form.despesas.errors }}
 <div class="table-wrap"><table class="table"><thead><tr><th><input type="checkbox" id="selecionar-todas" checked aria-label="Selecionar todas as despesas"></th><th>Fornecedor</th><th>Etapa</th><th>Item</th><th>NF</th><th>Valor</th></tr></thead><tbody>
 {% for despesa in form.elegiveis %}<tr><td><input type="checkbox" name="despesas" value="{{ despesa.pk }}" data-valor="{{ despesa.valor|unlocalize }}" {% if not form.is_bound or despesa.pk|stringformat:'s' in form.despesas.value %}checked{% endif %} aria-label="Selecionar {{ despesa.fornecedor }}"></td><td>{{ despesa.fornecedor }}</td><td>{{ despesa.etapa.titulo }}</td><td>{{ despesa.orcamento.descricao|default:"Área geral" }}</td><td>{{ despesa.numero_nf|default:"—" }}</td><td>R$ {{ despesa.valor|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="6" class="empty-state">Nenhuma despesa elegível. Complete fornecedor e valor das despesas na aba Geral.</td></tr>{% endfor %}
 </tbody></table></div>
-<div class="notice">A taxa considera todas as despesas selecionadas. A prévia final é calculada no servidor com precisão decimal.</div>
-<div class="form-grid">{% for field in form %}{% if field.name != 'despesas' %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}</div>{% endif %}{% endfor %}</div>
+<div class="notice">A taxa é recalculada automaticamente ao marcar ou desmarcar despesas. Ao alterar a seleção, qualquer ajuste de taxa e sua justificativa serão descartados.</div>
+<div class="stat-grid" aria-live="polite">
+  <div class="stat-card"><span>Despesas selecionadas</span><strong id="subtotal-selecionado">R$ {{ form.valor_despesas|floatformat:2 }}</strong></div>
+  <div class="stat-card"><span>Total com taxa</span><strong id="total-selecionado">R$ {{ form.total_inicial|floatformat:2 }}</strong></div>
+</div>
+<div class="form-grid">{% for field in form %}{% if field.name != 'despesas' %}<div class="field" {% if field.name == 'justificativa_taxa' %}id="justificativa-taxa" {% if not form.is_bound %}hidden{% endif %}{% endif %}><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}</div>{% endif %}{% endfor %}</div>
 {% if not form.tem_email_ativo %}<p class="muted">Para habilitar “Gerar e enviar por e-mail”, cadastre um e-mail ativo nos dados do projeto.</p>{% endif %}
-<p class="muted">Deixe a taxa aplicada em branco para usar o cálculo padrão. Um ajuste exige justificativa.</p>
-<button class="btn btn-primary" type="submit" {% if not form.elegiveis %}disabled{% endif %}>Conferir lote</button>
+<p class="muted">Você pode editar a taxa. Quando o valor diferir do cálculo automático, informe uma justificativa.</p>
+<button class="btn btn-primary" id="conferir-lote" type="submit" {% if not form.elegiveis %}disabled{% endif %}>Conferir lote</button>
 </form></div></section>
 <section class="card" id="historico-lotes"><div class="card-body"><h2>Histórico de Lotes</h2><div class="table-wrap"><table class="table"><thead><tr><th>Lote / confirmação</th><th>Despesas</th><th>Taxa aplicada</th><th>Total</th><th>E-mail</th><th></th></tr></thead><tbody>{% for lote in lotes %}<tr><td>#{{ lote.pk }} · {{ lote.data_envio|date:"d/m/Y H:i" }}</td><td>R$ {{ lote.valor_despesas|floatformat:2 }}</td><td>R$ {{ lote.valor_taxa|floatformat:2 }}</td><td>R$ {{ lote.valor_total|floatformat:2 }}</td><td>{{ lote.get_status_email_display }}</td><td><a href="{% url 'envios:detalhe' lote.pk %}">Visualizar</a> · <a href="{% url 'envios:pdf' lote.pk %}">PDF</a></td></tr>{% empty %}<tr><td colspan="6" class="empty-state">Nenhum lote confirmado.</td></tr>{% endfor %}</tbody></table></div></div></section>
-<script>document.getElementById('selecionar-todas').addEventListener('change',event=>{document.querySelectorAll('input[name="despesas"]').forEach(input=>{input.checked=event.target.checked;});});</script>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'js/formatacao.js' %}" defer></script><script src="{% static 'js/envios.js' %}" defer></script>{% endblock %}
