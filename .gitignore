@@ -13,3 +13,5 @@ htmlcov/
 .pytest_cache/
 node_modules/
 artifacts/
+.cache/
+tmp/
