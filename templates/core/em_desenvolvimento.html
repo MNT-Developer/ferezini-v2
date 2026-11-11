@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}<div class="page-heading"><div><p class="eyebrow">FEREZINI</p><h1>{{ titulo }}</h1></div></div><section class="card"><div class="empty-state placeholder-state"><span aria-hidden="true">◷</span><span class="badge">EM BREVE</span><h2>Em desenvolvimento</h2><p>Esta área está reservada para uma próxima etapa do sistema.</p><a href="{% url 'inicio' %}" class="btn btn-outline">Voltar ao início</a></div></section>{% endblock %}

@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}<a href="{% url 'accounts:lista' %}" class="back-link">← Funcionários</a><div class="page-heading"><div><p class="eyebrow">EQUIPE</p><h1>{{ titulo }}</h1><p class="muted">As permissões são independentes e podem ser combinadas.</p></div></div><form method="post" class="card card-body">{% csrf_token %}{% include 'core/form_fields.html' %}<div class="form-actions"><a href="{% url 'accounts:lista' %}" class="btn btn-outline">Cancelar</a><button type="submit" class="btn btn-primary">Salvar funcionário</button></div></form>{% endblock %}

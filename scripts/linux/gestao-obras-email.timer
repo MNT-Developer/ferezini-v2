@@ -1,0 +1,11 @@
+[Unit]
+Description=Verifica e-mails pendentes do Ferezini a cada minuto
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=gestao-obras-email.service
+
+[Install]
+WantedBy=timers.target

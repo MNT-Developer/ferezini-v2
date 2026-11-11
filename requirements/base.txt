@@ -1,0 +1,6 @@
+Django==5.2.19
+mysqlclient==2.3.1
+python-dotenv==1.2.4
+WeasyPrint==70.0
+waitress==3.0.2
+tzdata==2026.2; sys_platform == 'win32'

@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Relatório de Despesa · {{ projeto.nome }}{% endblock %}
+{% block content %}{% include "envios/_projeto_nav.html" with area="relatorios" %}<section class="card"><div class="card-body"><h2>Despesas por período</h2><p class="muted">Período inclusivo pela data de confirmação do lote, no horário de São Paulo.</p><form method="get" class="toolbar">{{ form.as_p }}<button class="btn btn-primary" type="submit">Consultar</button><button class="btn btn-outline" type="submit" name="formato" value="pdf">Baixar PDF</button></form>{% if inicio %}<h3>{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</h3>{% include "relatorios/_tabela_periodo.html" %}{% endif %}</div></section>{% endblock %}

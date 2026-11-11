@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{% if projeto %}Editar projeto{% else %}Novo projeto{% endif %}{% endblock %}
+{% block content %}
+<a href="{% url 'projetos:listar' %}" class="back-link">← Projetos</a>
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">DADOS DA OBRA</p>
+    <h1>{% if projeto %}Editar projeto{% else %}Novo projeto{% endif %}</h1>
+    <p class="muted">{% if projeto %}Atualize os dados da obra.{% else %}Novas obras iniciam com o status Em andamento.{% endif %}</p>
+  </div>
+</div>
+<form method="post" class="card card-body">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="notice notice-error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for field in form.hidden_fields %}
+    {{ field }}
+    {% for error in field.errors %}<div class="notice notice-error">{{ error }}</div>{% endfor %}
+  {% endfor %}
+  <div class="row g-4">
+    {% for field in form.visible_fields %}
+    <div class="{% if field.name == 'nome' or field.name == 'responsavel_tecnico' or field.name == 'descricao' %}col-12{% elif field.name == 'taxa_servico' or field.name == 'data_inicio' or field.name == 'previsao_termino' %}col-12 col-md-3{% else %}col-12 col-md-6{% endif %}">
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required" aria-label="obrigatório"> *</span>{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <a href="{% url 'projetos:listar' %}" class="btn btn-outline">Cancelar</a>
+    <button class="btn btn-primary" type="submit">Salvar projeto</button>
+  </div>
+</form>
+{% endblock %}
