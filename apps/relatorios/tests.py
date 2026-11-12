@@ -1,8 +1,11 @@
 import os
+import re
 from datetime import date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 from unittest import skipUnless
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -11,10 +14,10 @@ from django.urls import reverse
 
 from apps.despesas.models import Despesa
 from apps.envios.models import LoteEnvioDespesa, LoteEnvioItem
-from apps.envios.utils import dados_do_projeto, snapshot_despesa
+from apps.envios.utils import snapshot_despesa
 from apps.projetos.models import Etapa, Projeto
 
-from .utils import despesas_por_periodo
+from .utils import despesas_por_periodo, gerar_pdf_periodo
 
 
 class RelatorioPeriodoTestes(TestCase):
@@ -49,10 +52,10 @@ class RelatorioPeriodoTestes(TestCase):
             projeto=projeto, data_envio=instante, enviado_por=self.usuario,
             valor_despesas=Decimal(valor), percentual_taxa=Decimal("10"),
             valor_taxa_calculado=Decimal(valor) / 10, valor_taxa=Decimal(valor) / 10,
-            valor_total=Decimal(valor) * Decimal("1.1"), dados_projeto=dados_do_projeto(projeto),
+            valor_total=Decimal(valor) * Decimal("1.1"),
         )
         despesa = Despesa.objects.create(etapa=etapa, fornecedor="Fornecedor original", valor=Decimal(valor), lote_envio=lote, criado_por=self.usuario)
-        LoteEnvioItem.objects.create(lote=lote, despesa=despesa, valor_snapshot=despesa.valor, dados_snapshot=snapshot_despesa(despesa, lote.dados_projeto), ordem=0)
+        LoteEnvioItem.objects.create(lote=lote, despesa=despesa, valor_snapshot=despesa.valor, dados_snapshot=snapshot_despesa(despesa), ordem=0)
         return lote
 
     def test_periodo_inclusivo_fuso_escopo_e_taxa_uma_vez(self):
@@ -78,3 +81,35 @@ class RelatorioPeriodoTestes(TestCase):
         self.client.force_login(self.usuario)
         self.assertEqual(self.client.get(url, {"inicio": "2026-11-30", "fim": "2026-11-01"}).status_code, 400)
         self.assertContains(self.client.get(url, {"inicio": "2026-11-01", "fim": "2026-11-30"}), "Subtotal de despesas (sem taxa)")
+
+    def test_pdf_usa_raiz_atual_e_total_historico_com_taxa_unica_no_final(self):
+        fuso = ZoneInfo("America/Sao_Paulo")
+        self.adicionar_lote(datetime(2026, 11, 1, 12, tzinfo=fuso), valor="100")
+        self.adicionar_lote(datetime(2026, 11, 2, 12, tzinfo=fuso), valor="200")
+        self.adicionar_lote(datetime(2026, 12, 1, 12, tzinfo=fuso), valor="900")
+        contexto = despesas_por_periodo(self.projeto, date(2026, 11, 1), date(2026, 11, 30))
+        atual = Projeto.objects.get(pk=self.projeto.pk)
+        atual.nome = "Obra atualizada"
+        atual.cliente_contratante = "Cliente atual"
+        atual.endereco_obra = "Rua Atual, 100"
+        atual.tamanho = Decimal("175.26")
+        atual.taxa_servico = Decimal("99")
+        atual.save()
+        html = MagicMock()
+        html.return_value.write_pdf.return_value = b"%PDF-simulado"
+        with patch.dict("sys.modules", {"weasyprint": SimpleNamespace(HTML=html)}):
+            self.assertTrue(gerar_pdf_periodo(contexto).startswith(b"%PDF"))
+        relatorio = html.call_args.kwargs["string"]
+        for texto in ("Obra atualizada", "Cliente atual", "Rua Atual, 100", "175,26"):
+            self.assertIn(texto, relatorio)
+        self.assertInHTML("<td><strong>Valor:</strong> R$ 330,00</td>", relatorio)
+        corpo = re.search(r'<table class="table periodo-itens">.*?<tbody>(.*?)</tbody>', relatorio, re.S).group(1)
+        linhas = re.findall(r"<tr\b[^>]*>(.*?)</tr>", corpo, re.S)
+        self.assertEqual(len(linhas), 3)
+        celulas = [re.sub(r"\s+", " ", valor).strip() for valor in re.findall(r"<td>(.*?)</td>", linhas[-1], re.S)]
+        self.assertEqual(celulas, ["", "", "", "Taxa de Serviço", "", "", "R$ 30,00"])
+        self.assertEqual(relatorio.count("Taxa de Serviço"), 1)
+        self.assertNotIn("Subtotal de despesas", relatorio)
+        self.assertNotIn("Total com taxas", relatorio)
+        self.assertNotIn("Valores históricos dos snapshots", relatorio)
+        html.return_value.write_pdf.assert_called_once_with()

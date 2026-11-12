@@ -65,7 +65,7 @@ class LoteEnvioDespesa(RegistroHistorico):
         "projeto_id", "data_envio", "enviado_por_id", "modalidade",
         "valor_despesas", "percentual_taxa", "valor_taxa_calculado", "valor_taxa",
         "justificativa_taxa", "valor_total", "versao_layout", "destinatarios",
-        "chave_confirmacao", "dados_projeto",
+        "chave_confirmacao",
     )
     projeto = models.ForeignKey("projetos.Projeto", on_delete=models.PROTECT, related_name="lotes")
     data_envio = models.DateTimeField(default=timezone.now, db_index=True)
@@ -78,7 +78,6 @@ class LoteEnvioDespesa(RegistroHistorico):
     valor_taxa = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal("0"))])
     justificativa_taxa = models.TextField(blank=True)
     valor_total = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(Decimal("0"))])
-    dados_projeto = models.JSONField(default=dict)
     destinatarios = models.JSONField(default=list, blank=True)
     versao_layout = models.CharField(max_length=20, default="V1")
     chave_confirmacao = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)

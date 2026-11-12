@@ -39,6 +39,7 @@
           {% if projeto.endereco_obra %}
             <span class="separator">/</span> {{ projeto.endereco_obra }}
           {% endif %}
+          <span class="separator">/</span> Tamanho: {{ projeto.tamanho|numero_br }}
         </p>
       </div>
       <div class="actions">

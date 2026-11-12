@@ -73,6 +73,44 @@ class FinanceiroTests(TestCase):
         self.assertTrue(item.json()["registro"]["rascunho"])
         self.assertEqual(etapa.orcamentos.count(), 1)
 
+    def test_tamanho_padrao_zero_e_campo_opcional_no_formulario(self):
+        self.assertEqual(self.projeto.tamanho, Decimal("0"))
+        for valor in (None, "", "0"):
+            with self.subTest(valor=valor):
+                dados = {"nome": "Obra sem tamanho", "taxa_servico": "0"}
+                if valor is not None:
+                    dados["tamanho"] = valor
+                form = ProjetoForm(data=dados, usuario=self.usuario)
+                self.assertTrue(form.is_valid(), form.errors)
+                projeto = salvar_projeto(self.usuario, form)
+                projeto.refresh_from_db()
+                self.assertEqual(projeto.tamanho, Decimal("0.00"))
+
+    def test_tamanho_criado_e_editado_com_precisao_decimal(self):
+        form = ProjetoForm(data={"nome": "Obra com tamanho", "taxa_servico": "0", "tamanho": "1270.60"})
+        self.assertTrue(form.is_valid(), form.errors)
+        projeto = salvar_projeto(self.usuario, form)
+        edicao = ProjetoForm(data={
+            "nome": projeto.nome, "taxa_servico": "0", "tamanho": "150.75", "versao": projeto.versao,
+        }, instance=projeto, usuario=self.usuario)
+        self.assertTrue(edicao.is_valid(), edicao.errors)
+        projeto = salvar_projeto(self.usuario, edicao)
+        projeto.refresh_from_db()
+        self.assertEqual(projeto.tamanho, Decimal("150.75"))
+        self.client.force_login(self.usuario)
+        self.assertContains(self.client.get(reverse("projetos:detalhe", args=[projeto.pk])), "Tamanho: 150,75")
+        self.assertContains(self.client.get(reverse("projetos:editar", args=[projeto.pk])), 'name="tamanho"')
+
+    def test_tamanho_rejeita_negativos_e_fracao_acima_de_duas_casas(self):
+        for valor in ("-1", "1.001"):
+            with self.subTest(valor=valor):
+                form = ProjetoForm(data={"nome": "Obra", "taxa_servico": "0", "tamanho": valor})
+                self.assertFalse(form.is_valid())
+                self.assertIn("tamanho", form.errors)
+                self.projeto.tamanho = Decimal(valor)
+                with self.assertRaises(ValidationError):
+                    self.projeto.save()
+
     def test_tela_orcamento_etapa_protegida_e_limitada_ao_projeto(self):
         url = reverse("projetos:orcamento_etapa", args=[self.projeto.pk, self.etapa.pk])
         self.assertEqual(self.client.get(url).status_code, 302)

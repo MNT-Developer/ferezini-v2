@@ -67,25 +67,8 @@ def despesas_elegiveis(projeto):
     ).select_related("etapa", "orcamento").order_by("fornecedor", "pk")
 
 
-def dados_do_projeto(projeto):
-    campos = (
-        "id", "nome", "descricao", "cliente_contratante", "cpf_cnpj",
-        "endereco_obra", "data_inicio",
-        "previsao_termino", "data_conclusao", "status",
-    )
-    dados = {
-        campo: getattr(projeto, campo).isoformat()
-        if hasattr(getattr(projeto, campo), "isoformat") else getattr(projeto, campo)
-        for campo in campos
-    }
-    dados["responsavel_tecnico"] = projeto.nome_responsavel_tecnico
-    dados["responsavel_tecnico_id"] = projeto.responsavel_tecnico_id
-    return dados
-
-
-def snapshot_despesa(despesa, projeto_snapshot):
+def snapshot_despesa(despesa):
     return {
-        "projeto": projeto_snapshot,
         "etapa": {"id": despesa.etapa_id, "titulo": despesa.etapa.titulo},
         "orcamento": {"id": despesa.orcamento_id, "descricao": despesa.orcamento.descricao}
         if despesa.orcamento_id else None,
@@ -167,10 +150,9 @@ def confirmar_lote(usuario, projeto_id, despesa_ids, modalidade="GERAR", valor_t
         if not projeto.emails.filter(ativo=True).exists():
             raise ValidationError("Cadastre ao menos um e-mail ativo no projeto para habilitar o envio.")
         enderecos = validar_destinatarios(destinatarios or [])
-    dados_projeto = dados_do_projeto(projeto)
     lote = LoteEnvioDespesa(
         projeto=projeto, enviado_por=usuario, modalidade=modalidade,
-        destinatarios=enderecos, dados_projeto=dados_projeto, **resumo,
+        destinatarios=enderecos, **resumo,
     )
     if chave_confirmacao:
         lote.chave_confirmacao = chave_confirmacao
@@ -185,7 +167,7 @@ def confirmar_lote(usuario, projeto_id, despesa_ids, modalidade="GERAR", valor_t
         despesa.versao += 1
         despesa.save()
         LoteEnvioItem.objects.create(
-            lote=lote, despesa=despesa, dados_snapshot=snapshot_despesa(despesa, dados_projeto),
+            lote=lote, despesa=despesa, dados_snapshot=snapshot_despesa(despesa),
             valor_snapshot=despesa.valor, ordem=ordem,
         )
         registrar(usuario, despesa, "INCLUSAO_LOTE", anteriores=anterior,
@@ -225,7 +207,9 @@ def solicitar_reenvio(usuario, lote_id, destinatarios):
 def gerar_pdf_lote(lote):
     from weasyprint import HTML
 
-    html = render_to_string("envios/lote_impressao.html", {"lote": lote, "itens": lote.itens.all()})
+    # Consulte a raiz mesmo que o objeto recebido tenha uma FK em cache.
+    projeto = Projeto.objects.get(pk=lote.projeto_id)
+    html = render_to_string("envios/lote_impressao.html", {"lote": lote, "projeto": projeto})
     return HTML(string=html).write_pdf()
 
 
@@ -345,7 +329,7 @@ def processar_tentativa(tentativa_id):
     try:
         pdf = gerar_pdf_lote(tentativa.lote)
         mensagem = EmailMessage(
-            subject=f"Ferezini — despesas da obra {tentativa.lote.dados_projeto['nome']} — lote {tentativa.lote_id}",
+            subject=f"Ferezini — despesas da obra {tentativa.lote.projeto.nome} — lote {tentativa.lote_id}",
             body="Segue o relatório de despesas da obra em anexo.\nFerezini — Gestão Financeira de Obras",
             from_email=settings.DEFAULT_FROM_EMAIL, to=[], bcc=tentativa.destinatarios,
             headers={"Message-ID": f"<{tentativa.identificador}@ferezini.local>"},

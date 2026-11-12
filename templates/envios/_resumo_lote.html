@@ -1,0 +1,46 @@
+{% load huminize_extras %}
+
+<section class="envio-resumo" aria-label="Dados atuais da obra">
+  <h1>
+    {{ projeto.nome }}
+  </h1>
+  {% if impressao %}
+    <table class="envio-dados-obra" aria-label="Dados da obra e valor">
+      <colgroup>
+        <col>
+        <col>
+      </colgroup>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Cliente:</strong> {{ projeto.cliente_contratante|default:"—" }}
+          </td>
+          <td>
+            <strong>Tamanho da obra:</strong> {{ projeto.tamanho|numero_br }}
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Endereço:</strong> {{ projeto.endereco_obra|default:"—"|linebreaksbr }}
+          </td>
+          <td>
+            <strong>Valor:</strong> R$ {{ valor_relatorio|numero_br }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  {% else %}
+    <p>
+      <strong>Cliente:</strong> {{ projeto.cliente_contratante|default:"—" }}
+    </p>
+    <p>
+      <strong>Endereço:</strong> {{ projeto.endereco_obra|default:"—"|linebreaksbr }}
+    </p>
+    <p>
+      <strong>Tamanho:</strong> {{ projeto.tamanho|numero_br }}
+    </p>
+    <p class="envio-total">
+      <strong>Total do envio: R$ {{ lote.valor_total|numero_br }}</strong>
+    </p>
+  {% endif %}
+</section>

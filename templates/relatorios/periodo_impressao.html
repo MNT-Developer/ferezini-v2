@@ -3,21 +3,57 @@
   <head>
     <meta charset="utf-8">
     <title>Ferezini — despesas por período</title>
-    {% include "relatorios/_estilo_impressao.html" %}
+    {% include "relatorios/_estilo_obra_impressao.html" %}
+    <style>
+      @page {
+        @bottom-left {
+          content: "Período: {{ inicio|date:'d/m/Y' }} a {{ fim|date:'d/m/Y' }}";
+          text-align: left;
+          font-size: 9pt;
+          color: #666;
+        }
+
+        @bottom-right {
+          text-align: right;
+        }
+      }
+
+      .periodo-itens col:nth-child(1) {
+        width: 14%;
+      }
+
+      .periodo-itens col:nth-child(2) {
+        width: 16%;
+      }
+
+      .periodo-itens col:nth-child(3) {
+        width: 18%;
+      }
+
+      .periodo-itens col:nth-child(4) {
+        width: 26%;
+      }
+
+      .periodo-itens col:nth-child(5),
+      .periodo-itens col:nth-child(7) {
+        width: 9%;
+      }
+
+      .periodo-itens col:nth-child(6) {
+        width: 8%;
+      }
+
+      .periodo-itens td:nth-child(1),
+      .periodo-itens td:nth-child(6) {
+        white-space: nowrap;
+      }
+    </style>
   </head>
   <body>
     <header>
       <strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Despesas por período</span>
     </header>
-    <h1>
-      {{ projeto.nome }}
-    </h1>
-    <p>
-      {{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }} · Datas inclusivas da confirmação dos lotes · Horário de São Paulo
-    </p>
-    {% include "relatorios/_tabela_periodo.html" %}
-    <footer>
-      Ferezini · Valores históricos dos snapshots dos lotes. Total com taxas indicado separadamente.
-    </footer>
+    {% include "envios/_resumo_lote.html" with impressao=True valor_relatorio=valor_total %}
+    {% include "relatorios/_tabela_periodo.html" with impressao=True %}
   </body>
 </html>

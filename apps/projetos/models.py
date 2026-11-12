@@ -20,6 +20,10 @@ class Projeto(RegistroNegocio):
     cliente_contratante = models.CharField(max_length=200, blank=True)
     cpf_cnpj = models.CharField(max_length=18, blank=True)
     endereco_obra = models.TextField(blank=True)
+    tamanho = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0"), blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+    )
     responsavel_tecnico = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
         related_name="projetos_responsavel", verbose_name="Responsável técnico",
@@ -36,7 +40,10 @@ class Projeto(RegistroNegocio):
 
     class Meta:
         ordering = ["nome", "id"]
-        constraints = [models.CheckConstraint(condition=models.Q(taxa_servico__gte=0), name="projeto_taxa_nao_negativa")]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(taxa_servico__gte=0), name="projeto_taxa_nao_negativa"),
+            models.CheckConstraint(condition=models.Q(tamanho__gte=0), name="projeto_tamanho_nao_negativo"),
+        ]
 
     def clean(self):
         super().clean()

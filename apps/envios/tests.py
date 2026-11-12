@@ -1,4 +1,5 @@
 import os
+import re
 import smtplib
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -15,6 +16,7 @@ from django.core.mail.backends.smtp import EmailBackend as SMTPBackend
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import close_old_connections
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
@@ -205,9 +207,83 @@ class LotesTestes(EnviosFixture, TestCase):
             conteudo = gerar_pdf_lote(lote)
         self.assertTrue(conteudo.startswith(b"%PDF"))
         html.return_value.write_pdf.assert_called_once_with()
-        self.assertInHTML("<dt>Taxa</dt>", html.call_args.kwargs["string"])
-        self.assertInHTML("<dt>Taxa calculada</dt>", html.call_args.kwargs["string"], count=0)
-        self.assertIn("Fornecedor", html.call_args.kwargs["string"])
+        relatorio = html.call_args.kwargs["string"]
+        self.assertInHTML("<td>Taxa de Serviço</td>", relatorio, count=1)
+        self.assertNotIn("lote-totais", relatorio)
+        self.assertInHTML("<td><strong>Valor:</strong> R$ 110,61</td>", relatorio)
+        self.assertIn("Fornecedor", relatorio)
+
+    def test_relatorio_taxa_e_ultima_linha_com_apenas_fornecedor_e_valor(self):
+        despesas = [self.despesa("100"), self.despesa("200", fornecedor="Segundo fornecedor")]
+        lote = confirmar_lote(self.usuario, self.projeto.pk, [despesa.pk for despesa in despesas])
+        relatorio = render_to_string("envios/lote_impressao.html", {"lote": lote, "projeto": self.projeto})
+        corpo = re.search(r'<table class="table envio-itens">.*?<tbody>(.*?)</tbody>', relatorio, re.S).group(1)
+        linhas = re.findall(r"<tr\b[^>]*>(.*?)</tr>", corpo, re.S)
+        self.assertEqual(len(linhas), 3)
+        celulas = [re.sub(r"\s+", " ", valor).strip() for valor in re.findall(r"<td>(.*?)</td>", linhas[-1], re.S)]
+        self.assertEqual(celulas, ["", "", "Taxa de Serviço", "", "", "", "R$ 31,50"])
+        self.assertInHTML("<td><strong>Valor:</strong> R$ 331,50</td>", relatorio)
+        self.assertLess(relatorio.index("<strong>Valor:</strong>"), relatorio.index('class="table envio-itens"'))
+        for rotulo in ("Subtotal de despesas", "Percentual capturado", "Total com taxa"):
+            self.assertNotIn(rotulo, relatorio)
+
+    def test_relatorio_utiliza_taxa_aplicada_inclusive_ajuste_para_zero(self):
+        lote = self.lote(valor_taxa=Decimal("0"), justificativa_taxa="Isenção aprovada")
+        relatorio = render_to_string("envios/lote_impressao.html", {"lote": lote, "projeto": self.projeto})
+        self.assertGreater(lote.valor_taxa_calculado, Decimal("0"))
+        self.assertInHTML("<td>R$ 0,00</td>", relatorio, count=1)
+        self.assertInHTML("<td><strong>Valor:</strong> R$ 100,10</td>", relatorio)
+        self.assertNotIn("Isenção aprovada", relatorio)
+
+    def test_relatorio_consulta_raiz_atual_mesmo_com_projeto_em_cache(self):
+        self.projeto.nome = "Nome original"
+        self.projeto.cliente_contratante = "Cliente original"
+        self.projeto.endereco_obra = "Rua Original, 100"
+        self.projeto.tamanho = Decimal("1270.60")
+        self.projeto.save()
+        lote = self.lote()
+        self.assertEqual(lote.projeto.nome, "Nome original")
+        self.projeto.nome = "Nome atualizado"
+        self.projeto.cliente_contratante = "Cliente alterado"
+        self.projeto.endereco_obra = "Rua Alterada, 200"
+        self.projeto.tamanho = Decimal("900")
+        self.projeto.taxa_servico = Decimal("90")
+        self.projeto.save()
+        html = MagicMock()
+        html.return_value.write_pdf.return_value = b"%PDF-simulado"
+        with patch.dict("sys.modules", {"weasyprint": SimpleNamespace(HTML=html)}):
+            gerar_pdf_lote(lote)
+        relatorio = html.call_args.kwargs["string"]
+        self.client.force_login(self.usuario)
+        resposta = self.client.get(reverse("envios:detalhe", args=[lote.pk]))
+        self.assertEqual(resposta.status_code, 200)
+        resumo_pagina = re.search(r'<section class="envio-resumo".*?</section>', resposta.content.decode(), re.S).group(0)
+        for conteudo in (relatorio, resumo_pagina):
+            self.assertIn("Nome atualizado", conteudo)
+            self.assertIn("Cliente alterado", conteudo)
+            self.assertIn("Rua Alterada, 200", conteudo)
+            self.assertIn("900,00", conteudo)
+            self.assertNotIn("Nome original", conteudo)
+            self.assertNotIn("Cliente original", conteudo)
+            self.assertNotIn("Rua Original, 100", conteudo)
+        self.assertInHTML("<td><strong>Valor:</strong> R$ 110,61</td>", relatorio)
+        self.assertInHTML("<td>R$ 10,51</td>", relatorio)
+
+    def test_novos_lotes_e_itens_nao_copiam_dados_descritivos_do_projeto(self):
+        self.projeto.cliente_contratante = "Cliente que deve ficar na raiz"
+        self.projeto.save()
+        lote = self.lote()
+        self.assertNotIn("dados_projeto", {campo.name for campo in lote._meta.fields})
+        snapshot = lote.itens.get().dados_snapshot
+        self.assertNotIn("projeto", snapshot)
+        self.assertNotIn("cliente_contratante", snapshot)
+        self.assertEqual(snapshot["fornecedor"], "Fornecedor")
+        self.assertEqual(snapshot["valor"], "100.10")
+
+    def test_resumo_de_projeto_sem_tamanho_informado_exibe_zero(self):
+        lote = self.lote()
+        resumo = render_to_string("envios/_resumo_lote.html", {"lote": lote, "projeto": self.projeto})
+        self.assertInHTML("<p><strong>Tamanho:</strong> 0,00</p>", resumo)
 
     def test_pdf_indisponivel_retorna_503_amigavel(self):
         lote = self.lote()
@@ -237,10 +313,25 @@ class LotesTestes(EnviosFixture, TestCase):
         self.assertEqual(previa.status_code, 200)
         confirmacao = self.client.post(reverse("envios:confirmar", args=[self.projeto.pk]), {"token": previa.context["token"]})
         self.assertEqual(confirmacao.status_code, 302)
-        self.assertContains(self.client.get(confirmacao.url), "dados históricos preservados")
+        self.assertContains(self.client.get(confirmacao.url), "notas e valores históricos preservados")
 
 
 class FilaEmailTestes(EnviosFixture, TestCase):
+    def test_envio_usa_nome_atual_da_obra_preservando_destinatarios_confirmados(self):
+        lote = self.lote(enviar=True)
+        self.projeto.nome = "Nome atualizado da obra"
+        self.projeto.save()
+        self.email.email = "novo-contato@example.com"
+        self.email.save()
+        with patch("apps.envios.utils.gerar_pdf_lote", return_value=b"PDF"):
+            self.assertTrue(processar_tentativa(lote.tentativas.get().pk))
+        mensagem = mail.outbox[-1]
+        self.assertIn("Nome atualizado da obra", mensagem.subject)
+        self.assertEqual(mensagem.bcc, ["obra@example.com"])
+        lote.refresh_from_db()
+        self.assertEqual(lote.destinatarios, ["obra@example.com"])
+        self.assertEqual(lote.tentativas.get().destinatarios, ["obra@example.com"])
+
     def test_smtp_parcial_registra_recusas_e_bloqueia_retry(self):
         lote = confirmar_lote(self.usuario, self.projeto.pk, [self.despesa().pk],
                               modalidade="GERAR_ENVIAR", destinatarios=["obra@example.com", "recusado@example.com"])

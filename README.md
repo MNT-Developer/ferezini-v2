@@ -16,10 +16,14 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
     tests/                  # testes JavaScript
     test_settings.py        # isolamento dos testes automatizados
     tests_deploy.py
-    versao/v.0.0.4.md         # evolução funcional atual
+    versao/v.0.0.6.md         # versão atual em desenvolvimento
 ```
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
+
+A versão [v.0.0.5](.codex/versao/v.0.0.5.md) foi finalizada em 12/11/2026, com o tamanho da obra, os dados descritivos consultados na raiz do projeto e a padronização dos PDFs. A versão ativa é a [v.0.0.6](.codex/versao/v.0.0.6.md); as próximas alterações serão registradas nela até o encerramento explícito pelo usuário.
+
+Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
 
 Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, Pango/WeasyPrint, mysqlclient e Cron**. Suporte genérico a Python não garante essas bibliotecas nativas.
 
@@ -87,4 +91,4 @@ node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex
 
 No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF exige WeasyPrint/Pango.
 
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
+Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.6](.codex/versao/v.0.0.6.md), [versão finalizada v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).

@@ -1,7 +1,16 @@
 {% load huminize_extras %}
 
 <div class="table-wrap">
-  <table class="table">
+  <table class="table periodo-itens">
+    <colgroup>
+      <col>
+      <col>
+      <col>
+      <col>
+      <col>
+      <col>
+      <col>
+    </colgroup>
     <thead>
       <tr>
         <th>
@@ -23,7 +32,11 @@
           Data NF
         </th>
         <th>
-          Valor histórico
+          {% if impressao %}
+            Valor
+          {% else %}
+            Valor histórico
+          {% endif %}
         </th>
       </tr>
     </thead>
@@ -61,29 +74,51 @@
           </td>
         </tr>
       {% endfor %}
+      {% if impressao %}
+        <tr class="envio-taxa">
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+            Taxa de Serviço
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+            R$ {{ valor_taxas|numero_br }}
+          </td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 </div>
-<dl>
-  <dt>
-    Subtotal de despesas (sem taxa)
-  </dt>
-  <dd>
-    R$ {{ valor_despesas|numero_br }}
-  </dd>
-  <dt>
-    Taxas aplicadas nos lotes do período
-  </dt>
-  <dd>
-    R$ {{ valor_taxas|numero_br }}
-  </dd>
-  <dt>
-    Total com taxas
-  </dt>
-  <dd>
-    <strong>R$ {{ valor_total|numero_br }}</strong>
-  </dd>
-</dl>
-<p class="muted">
-  Cada taxa é somada uma única vez por lote. São usados os valores históricos dos snapshots, inclusive para despesas alteradas ou inativadas depois.
-</p>
+{% if not impressao %}
+  <dl>
+    <dt>
+      Subtotal de despesas (sem taxa)
+    </dt>
+    <dd>
+      R$ {{ valor_despesas|numero_br }}
+    </dd>
+    <dt>
+      Taxas aplicadas nos lotes do período
+    </dt>
+    <dd>
+      R$ {{ valor_taxas|numero_br }}
+    </dd>
+    <dt>
+      Total com taxas
+    </dt>
+    <dd>
+      <strong>R$ {{ valor_total|numero_br }}</strong>
+    </dd>
+  </dl>
+  <p class="muted">
+    Cada taxa é somada uma única vez por lote. São usados os valores históricos dos snapshots, inclusive para despesas alteradas ou inativadas depois.
+  </p>
+{% endif %}

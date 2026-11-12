@@ -1,4 +1,4 @@
-import json
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -10,7 +10,6 @@ from django.urls import reverse
 from apps.accounts.forms import FuncionarioForm
 from apps.accounts.permissions import pode_alterar_responsavel
 from apps.auditoria.models import HistoricoAlteracao
-from apps.envios.utils import dados_do_projeto
 
 from .forms import ProjetoForm
 from .models import Projeto
@@ -191,18 +190,6 @@ class ResponsavelTecnicoTests(TestCase):
         self.assertContains(resposta, 'value="Ana"')
         self.assertEqual(resposta.context["form"].responsavel_selecionado.pk, self.ana.pk)
 
-    def test_snapshot_serializavel_preserva_nome_e_identificador(self):
-        self.projeto.responsavel_tecnico_anterior = "Responsável legado"
-        self.projeto.save()
-        self.assertEqual(dados_do_projeto(self.projeto)["responsavel_tecnico"], "Responsável legado")
-        self.vincular(self.ana)
-        snapshot = json.loads(json.dumps(dados_do_projeto(self.projeto)))
-        self.assertEqual(snapshot["responsavel_tecnico"], "Ana Silva")
-        self.assertEqual(snapshot["responsavel_tecnico_id"], self.ana.pk)
-        self.ana.first_name = "Outro nome"
-        self.ana.save()
-        self.assertEqual(snapshot["responsavel_tecnico"], "Ana Silva")
-
     def test_permissao_administrativo_disponivel_sem_ampliar_outras_areas(self):
         self.assertIn("permissao_administrativo", FuncionarioForm().fields)
         self.assertFalse(get_user_model()._meta.get_field("permissao_administrativo").default)
@@ -233,6 +220,7 @@ class MigracaoResponsavelTests(TransactionTestCase):
                 projeto = Projeto.objects.get(pk=pk)
                 self.assertEqual(projeto.responsavel_tecnico_anterior, texto)
                 self.assertIsNone(projeto.responsavel_tecnico_id)
+                self.assertEqual(projeto.tamanho, Decimal("0.00"))
             atual = get_user_model().objects.get(pk=usuario.pk)
             self.assertFalse(atual.permissao_administrativo)
             self.assertTrue(atual.permissao_diretoria)

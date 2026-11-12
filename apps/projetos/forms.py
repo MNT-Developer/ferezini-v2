@@ -30,7 +30,7 @@ class ProjetoForm(forms.ModelForm):
         model = Projeto
         fields = [
             "nome", "cliente_contratante", "cpf_cnpj", "endereco_obra",
-            "taxa_servico", "data_inicio", "previsao_termino",
+            "taxa_servico", "data_inicio", "previsao_termino", "tamanho",
             "responsavel_tecnico", "descricao",
         ]
         labels = {
@@ -40,6 +40,7 @@ class ProjetoForm(forms.ModelForm):
             "taxa_servico": "Taxa (%)",
         }
         widgets = {
+            "tamanho": forms.NumberInput(attrs={"min": "0", "step": "0.01"}),
             "taxa_servico": PercentualInput(attrs={"step": "0.01"}),
             "descricao": forms.Textarea(attrs={"rows": 3}), "endereco_obra": forms.Textarea(attrs={"rows": 3}),
             "data_inicio": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
@@ -57,7 +58,7 @@ class ProjetoForm(forms.ModelForm):
         )
         self.order_fields([
             "nome", "cliente_contratante", "cpf_cnpj", "endereco_obra", "emails",
-            "taxa_servico", "data_inicio", "previsao_termino",
+            "taxa_servico", "data_inicio", "previsao_termino", "tamanho",
             "responsavel_tecnico", "descricao", "versao",
         ])
         for campo in self.fields.values():
@@ -85,6 +86,9 @@ class ProjetoForm(forms.ModelForm):
             if responsavel is not None and (not responsavel.is_active or responsavel.is_superuser):
                 raise ValidationError("Selecione um colaborador ativo que não seja superusuário.")
         return responsavel
+
+    def clean_tamanho(self):
+        return self.cleaned_data["tamanho"] or Decimal("0")
 
     def clean_emails(self):
         emails = []

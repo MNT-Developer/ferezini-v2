@@ -1,0 +1,22 @@
+.envio-resumo h1 {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.envio-resumo p {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+
+.envio-resumo .envio-total {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: var(--canvas);
+  color: var(--brand);
+}
+
+.table .envio-taxa > td {
+  background: var(--canvas);
+  font-weight: 600;
+}

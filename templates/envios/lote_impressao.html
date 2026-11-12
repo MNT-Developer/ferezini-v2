@@ -3,29 +3,57 @@
   <head>
     <meta charset="utf-8">
     <title>Ferezini — lote {{ lote.pk }}</title>
-    {% include "relatorios/_estilo_impressao.html" %}
+    {% include "relatorios/_estilo_obra_impressao.html" %}
+    <style>
+      @page {
+        @bottom-left {
+          content: "Confirmação: {{ lote.data_envio|date:'d/m/Y H:i' }}";
+          text-align: left;
+          font-size: 9pt;
+          color: #666;
+        }
+
+        @bottom-right {
+          text-align: right;
+        }
+      }
+
+      .envio-itens col:nth-child(1) {
+        width: 16%;
+      }
+
+      .envio-itens col:nth-child(2) {
+        width: 18%;
+      }
+
+      .envio-itens col:nth-child(3) {
+        width: 27%;
+      }
+
+      .envio-itens col:nth-child(4) {
+        width: 14%;
+      }
+
+      .envio-itens col:nth-child(5),
+      .envio-itens col:nth-child(6) {
+        width: 8%;
+      }
+
+      .envio-itens col:nth-child(7) {
+        width: 9%;
+      }
+
+      .envio-itens td:nth-child(4),
+      .envio-itens td:nth-child(6) {
+        white-space: nowrap;
+      }
+    </style>
   </head>
   <body>
     <header>
       <strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Relatório de envio</span>
     </header>
-    <h1>
-      {{ lote.dados_projeto.nome }}
-    </h1>
-    <p>
-      {{ lote.dados_projeto.cliente_contratante }}
-      <br>
-      {{ lote.dados_projeto.endereco_obra }}
-    </p>
-    <p>
-      Lote #{{ lote.pk }} · Confirmação: {{ lote.data_envio|date:"d/m/Y H:i" }} · Layout {{ lote.versao_layout }}
-    </p>
-    <p>
-      Valores históricos registrados na confirmação. O total inclui a taxa aplicada.
-    </p>
+    {% include "envios/_resumo_lote.html" with impressao=True valor_relatorio=lote.valor_total %}
     {% include "envios/_itens_lote.html" %}
-    <footer>
-      Ferezini · Documento gerado sob demanda a partir dos snapshots do lote.
-    </footer>
   </body>
 </html>

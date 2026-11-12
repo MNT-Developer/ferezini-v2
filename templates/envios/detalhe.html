@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% load static %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/envios.css' %}">
+{% endblock %}
+
 {% block title %}
   Lote #{{ lote.pk }} · Ferezini
 {% endblock %}
@@ -13,14 +19,12 @@
             Lote #{{ lote.pk }}
           </h2>
           <p class="muted">
-            Confirmado em {{ lote.data_envio|date:"d/m/Y H:i" }} por {{ lote.enviado_por.get_full_name|default:lote.enviado_por.username }} · dados históricos preservados
+            Confirmado em {{ lote.data_envio|date:"d/m/Y H:i" }} por {{ lote.enviado_por.get_full_name|default:lote.enviado_por.username }} · notas e valores históricos preservados
           </p>
         </div>
         <a class="btn btn-primary" href="{% url 'envios:pdf' lote.pk %}">Baixar PDF</a>
       </div>
-      <p>
-        <strong>Obra na confirmação:</strong> {{ lote.dados_projeto.nome }} · {{ lote.dados_projeto.cliente_contratante }}
-      </p>
+      {% include "envios/_resumo_lote.html" %}
       {% include "envios/_itens_lote.html" %}
     </div>
   </section>
