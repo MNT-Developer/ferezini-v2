@@ -1,27 +1,195 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}{% if etapa_orcamento %}Orçamento · {{ etapa_orcamento.titulo }} · {% endif %}{{ projeto.nome }}{% endblock %}
-{% block content %}
-{% if etapa_orcamento %}
-<a href="{% url 'projetos:detalhe' projeto.pk %}?aba=orcamento" class="back-link">← Orçamento da obra · {{ projeto.nome }}</a>
-<div class="page-heading"><div><p class="eyebrow">ORÇAMENTO DA ETAPA · {{ projeto.nome }}</p><h1>{{ etapa_orcamento.titulo }}</h1><p class="muted">Adicione os itens previstos para esta etapa. As alterações são salvas por célula.</p></div></div>
-{% else %}
-<a href="{% url 'projetos:listar' %}" class="back-link">← Projetos</a>
-<div class="page-heading project-heading"><div><p class="eyebrow">PROJETO #{{ projeto.pk }}</p><h1>{{ projeto.nome }}</h1><p class="muted">{{ projeto.cliente_contratante|default:'Cliente não informado' }}{% if projeto.endereco_obra %} <span class="separator">/</span> {{ projeto.endereco_obra }}{% endif %}</p></div><div class="actions"><span class="badge status-{{ projeto.status|lower }}">{{ projeto.get_status_display }}</span><a href="{% url 'projetos:editar' projeto.pk %}" class="btn btn-outline">Editar projeto</a></div></div>
-<div class="stat-grid" id="project-totals"><div class="stat-card"><span>Total orçado</span><strong data-total="orcado">R$ {{ totais.orcado|floatformat:2 }}</strong><small>Previsão e taxas de serviço</small></div><div class="stat-card"><span>Total realizado</span><strong data-total="realizado">R$ {{ totais.realizado|floatformat:2 }}</strong><small>Despesas ativas e taxas</small></div><div class="stat-card"><span>Saldo disponível</span><strong data-total="saldo">R$ {{ totais.saldo|floatformat:2 }}</strong><small>Orçado menos realizado</small></div><div class="stat-card"><span>Execução financeira</span><strong data-total="execucao">{{ totais.execucao|floatformat:1 }}%</strong><small>Realizado sobre o orçado</small></div></div>
-<nav class="tabs" aria-label="Áreas do projeto"><a class="tab active" href="?aba=geral" data-tab="geral">Geral</a><a class="tab" href="?aba=orcamento" data-tab="orcamento">Orçamento</a><a class="tab" href="{% url 'envios:painel' projeto.pk %}">Envio de Despesas</a><a class="tab" href="{% url 'relatorios:despesas' projeto.pk %}">Relatório de Despesa</a></nav>
-{% endif %}
-<section id="project-sheet" data-base="{% url 'projetos:detalhe' projeto.pk %}" data-etapa-id="{{ etapa_orcamento.pk|default:'' }}" data-history="{% url 'projetos:historico' projeto.pk %}">
-  <div class="sheet-toolbar"><div><h2 id="sheet-title">{% if etapa_orcamento %}Orçamento da etapa{% else %}Visão geral{% endif %}</h2><p class="muted" id="sheet-description">Do previsto ao realizado, por etapa da obra.</p></div><div class="actions"><label class="check-label"><input type="checkbox" id="show-inactive" {% if request.GET.inativos == '1' or etapa_orcamento and not etapa_orcamento.ativo %}checked{% endif %}> Exibir itens excluídos</label><a href="{% url 'projetos:historico' projeto.pk %}" class="btn btn-outline btn-sm">Histórico</a>{% if not etapa_orcamento %}<button class="btn btn-primary btn-sm" id="new-stage" type="button">+ Nova etapa</button>{% endif %}</div></div>
-  <div class="notice notice-error" id="sheet-error" role="alert" hidden></div>
-  <div id="expense-filters" class="filter-bar"><span class="muted">Filtros de despesas</span><div id="filter-chips"></div><button id="clear-filters" type="button" class="btn btn-quiet btn-sm" hidden>Limpar filtros</button><span class="filter-note">Os filtros preservam os totais oficiais.</span></div>
-  <div id="sheet-content" aria-label="Planilha do projeto"></div>
-  <div class="sheet-footer"><span id="save-status" role="status" aria-live="polite">Edições são salvas ao sair da célula.</span><span class="muted">Valores em reais · Arraste etapas e itens na aba Orçamento</span></div>
-  <noscript><div class="notice">Habilite o JavaScript para consultar e editar a planilha. Os relatórios e o histórico continuam disponíveis.</div></noscript>
-</section>
-{{ dados|json_script:'projeto-dados' }}
-<dialog id="reason-dialog" class="app-dialog" aria-labelledby="reason-title"><form method="dialog" id="reason-form"><h2 id="reason-title">Justificativa</h2><p class="muted" id="reason-description">Registre o motivo desta alteração.</p><div class="field"><label for="reason-input">Observação</label><textarea id="reason-input" rows="4" maxlength="4000"></textarea></div><div class="form-actions"><button class="btn btn-outline" value="cancel" type="submit" formnovalidate>Cancelar</button><button class="btn btn-primary" value="confirm" type="submit" id="reason-confirm">Continuar</button></div></form></dialog>
-<dialog id="stage-dialog" class="app-dialog" aria-labelledby="stage-title"><form method="dialog" id="stage-form"><h2 id="stage-title">Nova etapa</h2><p class="muted">Organize a obra em etapas como Fundação, Elétrica ou Acabamento.</p><div class="field"><label for="stage-input">Nome da etapa</label><input id="stage-input" maxlength="200" required autocomplete="off"></div><div class="form-actions"><button class="btn btn-outline" type="submit" value="cancel" formnovalidate>Cancelar</button><button class="btn btn-primary" value="confirm" type="submit">Criar etapa</button></div></form></dialog>
-<dialog id="filter-dialog" class="app-dialog" aria-labelledby="filter-title"><form method="dialog" id="filter-form"><h2 id="filter-title">Filtrar coluna</h2><div class="field"><label for="filter-input">Pesquisar nesta coluna</label><input id="filter-input" type="search" autocomplete="off"></div><div class="form-actions"><button class="btn btn-outline" type="submit" value="clear">Remover filtro</button><button class="btn btn-primary" type="submit" value="confirm">Aplicar</button></div></form></dialog>
+
+{% load static huminize_extras %}
+
+{% block title %}
+  {% if etapa_orcamento %}
+    Orçamento · {{ etapa_orcamento.titulo }} ·
+  {% endif %}
+  {{ projeto.nome }}
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/formatacao.js' %}" defer></script><script src="{% static 'js/projeto.js' %}" defer></script>{% endblock %}
+{% block content %}
+  {% if etapa_orcamento %}
+    <a href="{% url 'projetos:detalhe' projeto.pk %}?aba=orcamento" class="back-link">← Orçamento da obra · {{ projeto.nome }}</a>
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">
+          ORÇAMENTO DA ETAPA · {{ projeto.nome }}
+        </p>
+        <h1>
+          {{ etapa_orcamento.titulo }}
+        </h1>
+        <p class="muted">
+          Adicione os itens previstos para esta etapa. As alterações são salvas por célula.
+        </p>
+      </div>
+    </div>
+  {% else %}
+    <a href="{% url 'projetos:listar' %}" class="back-link">← Projetos</a>
+    <div class="page-heading project-heading">
+      <div>
+        <p class="eyebrow">
+          PROJETO #{{ projeto.pk }}
+        </p>
+        <h1>
+          {{ projeto.nome }}
+        </h1>
+        <p class="muted">
+          {{ projeto.cliente_contratante|default:'Cliente não informado' }}
+          {% if projeto.endereco_obra %}
+            <span class="separator">/</span> {{ projeto.endereco_obra }}
+          {% endif %}
+        </p>
+      </div>
+      <div class="actions">
+        <span class="badge status-{{ projeto.status|lower }}">{{ projeto.get_status_display }}</span><a href="{% url 'projetos:editar' projeto.pk %}" class="btn btn-outline">Editar projeto</a>
+      </div>
+    </div>
+    <div class="stat-grid" id="project-totals">
+      <div class="stat-card">
+        <span>Total orçado</span><strong data-total="orcado">R$ {{ totais.orcado|numero_br }}</strong><small>Previsão e taxas de serviço</small>
+      </div>
+      <div class="stat-card">
+        <span>Total realizado</span><strong data-total="realizado">R$ {{ totais.realizado|numero_br }}</strong><small>Despesas ativas e taxas</small>
+      </div>
+      <div class="stat-card">
+        <span>Saldo disponível</span><strong data-total="saldo">R$ {{ totais.saldo|numero_br }}</strong><small>Orçado menos realizado</small>
+      </div>
+      <div class="stat-card">
+        <span>Execução financeira</span><strong data-total="execucao">{{ totais.execucao|floatformat:1 }}%</strong><small>Realizado sobre o orçado</small>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Áreas do projeto">
+      <a class="tab active" href="?aba=geral" data-tab="geral">Geral</a><a class="tab" href="?aba=orcamento" data-tab="orcamento">Orçamento</a><a class="tab" href="{% url 'envios:painel' projeto.pk %}">Envio de Despesas</a><a class="tab" href="{% url 'relatorios:despesas' projeto.pk %}">Relatório de Despesa</a>
+    </nav>
+  {% endif %}
+  <section id="project-sheet"
+           data-base="{% url 'projetos:detalhe' projeto.pk %}"
+           data-etapa-id="{{ etapa_orcamento.pk|default:'' }}"
+           data-history="{% url 'projetos:historico' projeto.pk %}">
+    <div class="sheet-toolbar">
+      <div>
+        <h2 id="sheet-title">
+          {% if etapa_orcamento %}
+            Orçamento da etapa
+          {% else %}
+            Visão geral
+          {% endif %}
+        </h2>
+        <p class="muted" id="sheet-description">
+          Do previsto ao realizado, por etapa da obra.
+        </p>
+      </div>
+      <div class="actions">
+        <label class="check-label">
+          <input type="checkbox"
+                 id="show-inactive"
+                 {% if request.GET.inativos == '1' or etapa_orcamento and not etapa_orcamento.ativo %}
+                   checked
+                 {% endif %}>
+          Exibir itens excluídos
+        </label>
+        <a href="{% url 'projetos:historico' projeto.pk %}" class="btn btn-outline btn-sm">Histórico</a>
+        {% if not etapa_orcamento %}
+          <button class="btn btn-primary btn-sm" id="new-stage" type="button">
+            + Nova etapa
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="notice notice-error" id="sheet-error" role="alert" hidden>
+    </div>
+    <div id="expense-filters" class="filter-bar">
+      <span class="muted">Filtros de despesas</span>
+      <div id="filter-chips">
+      </div>
+      <button id="clear-filters" type="button" class="btn btn-quiet btn-sm" hidden>
+        Limpar filtros
+      </button>
+      <span class="filter-note">Os filtros preservam os totais oficiais.</span>
+    </div>
+    <div id="sheet-content" aria-label="Planilha do projeto">
+    </div>
+    <div class="sheet-footer">
+      <span id="save-status" role="status" aria-live="polite">Edições são salvas ao sair da célula.</span><span class="muted">Valores em reais · Arraste etapas e itens na aba Orçamento</span>
+    </div>
+    <noscript>
+      <div class="notice">
+        Habilite o JavaScript para consultar e editar a planilha. Os relatórios e o histórico continuam disponíveis.
+      </div>
+    </noscript>
+  </section>
+  {{ dados|json_script:'projeto-dados' }}
+  <dialog id="reason-dialog" class="app-dialog" aria-labelledby="reason-title">
+    <form method="dialog" id="reason-form">
+      <h2 id="reason-title">
+        Justificativa
+      </h2>
+      <p class="muted" id="reason-description">
+        Registre o motivo desta alteração.
+      </p>
+      <div class="field">
+        <label for="reason-input">
+          Observação
+        </label>
+        <textarea id="reason-input" rows="4" maxlength="4000"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" value="cancel" type="submit" formnovalidate>
+          Cancelar
+        </button>
+        <button class="btn btn-primary" value="confirm" type="submit" id="reason-confirm">
+          Continuar
+        </button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="stage-dialog" class="app-dialog" aria-labelledby="stage-title">
+    <form method="dialog" id="stage-form">
+      <h2 id="stage-title">
+        Nova etapa
+      </h2>
+      <p class="muted">
+        Organize a obra em etapas como Fundação, Elétrica ou Acabamento.
+      </p>
+      <div class="field">
+        <label for="stage-input">
+          Nome da etapa
+        </label>
+        <input id="stage-input" maxlength="200" required autocomplete="off">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" type="submit" value="cancel" formnovalidate>
+          Cancelar
+        </button>
+        <button class="btn btn-primary" value="confirm" type="submit">
+          Criar etapa
+        </button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="filter-dialog" class="app-dialog" aria-labelledby="filter-title">
+    <form method="dialog" id="filter-form">
+      <h2 id="filter-title">
+        Filtrar coluna
+      </h2>
+      <div class="field">
+        <label for="filter-input">
+          Pesquisar nesta coluna
+        </label>
+        <input id="filter-input" type="search" autocomplete="off">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" type="submit" value="clear">
+          Remover filtro
+        </button>
+        <button class="btn btn-primary" type="submit" value="confirm">
+          Aplicar
+        </button>
+      </div>
+    </form>
+  </dialog>
+{% endblock %}
+{% block extra_js %}
+  <script src="{% static 'js/formatacao.js' %}" defer></script><script src="{% static 'js/projeto.js' %}" defer></script>
+{% endblock %}

@@ -1,5 +1,0 @@
-# cPanel > Cron Jobs. Copie o caminho REAL do virtualenv fornecido pelo painel.
-# Minuto/Hora/Dia/Mes/Dia da semana: * * * * * (se o plano permitir).
-# No campo Command, inclua apenas o comando, sem os cinco campos do agendamento.
-# Altere USUARIO, frz-v2 e 3.12 de acordo com sua conta e versao selecionada.
-* * * * * /home/USUARIO/virtualenv/frz-v2/3.12/bin/python /home/USUARIO/frz-v2/.codex/scripts/processar_emails.py --limite 1 >> /home/USUARIO/frz-v2/tmp/cron-email.log 2>&1

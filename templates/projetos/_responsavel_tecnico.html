@@ -1,0 +1,62 @@
+<div class="col-12"
+     id="responsavel-selector"
+     {% if projeto %}
+       data-url="{% url 'projetos:colaboradores_projeto' projeto.pk %}"
+     {% else %}
+       data-url="{% url 'projetos:colaboradores' %}"
+     {% endif %}>
+  {{ field }}
+  <div class="row g-3">
+    <div class="col-3">
+      <div class="field">
+        <label for="responsavel-codigo">
+          ID
+        </label>
+        <input id="responsavel-codigo"
+               type="number"
+               class="form-control
+                      {% if form.pode_editar_responsavel %}
+                        responsavel-lookup
+                      {% endif %}"
+               readonly
+               value="{{ form.responsavel_selecionado.pk|default_if_none:'' }}"
+               aria-describedby="responsavel-help"
+               {% if form.pode_editar_responsavel %}
+                 aria-haspopup="dialog" aria-controls="responsavel-dialog"
+               {% endif %}>
+      </div>
+    </div>
+    <div class="col-9">
+      <div class="field">
+        <label for="responsavel-nome">
+          Responsável técnico
+        </label>
+        <input id="responsavel-nome"
+               type="text"
+               class="form-control
+                      {% if form.pode_editar_responsavel %}
+                        responsavel-lookup
+                      {% endif %}"
+               readonly
+               value="{{ form.nome_responsavel_selecionado }}"
+               aria-describedby="responsavel-help"
+               {% if form.pode_editar_responsavel %}
+                 aria-haspopup="dialog" aria-controls="responsavel-dialog" placeholder="Selecionar colaborador"
+               {% endif %}>
+      </div>
+    </div>
+  </div>
+  <small class="field-help" id="responsavel-help">
+    {% if form.pode_editar_responsavel %}
+      Opcional. Clique em um dos campos ou pressione Enter para selecionar o colaborador.
+    {% else %}
+      Somente Diretoria ou Administrativo podem alterar o responsável técnico já vinculado.
+    {% endif %}
+  </small>
+  {% if projeto.responsavel_tecnico_anterior %}
+    <small class="field-help d-block">Responsável informado anteriormente: {{ projeto.responsavel_tecnico_anterior }}</small>
+  {% endif %}
+  {% for error in field.errors %}
+    <small class="field-error d-block">{{ error }}</small>
+  {% endfor %}
+</div>

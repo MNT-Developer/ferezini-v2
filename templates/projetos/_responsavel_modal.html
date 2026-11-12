@@ -1,0 +1,52 @@
+<dialog id="responsavel-dialog"
+        class="app-dialog responsavel-dialog"
+        aria-labelledby="responsavel-title"
+        aria-describedby="responsavel-description">
+  <h2 id="responsavel-title">
+    Selecionar responsável técnico
+  </h2>
+  <p class="muted" id="responsavel-description">
+    Pesquise por nome ou sobrenome e clique na linha do colaborador para selecioná-lo.
+  </p>
+  <form id="responsavel-search-form">
+    <label class="visually-hidden" for="responsavel-search">
+      Nome ou sobrenome
+    </label>
+    <div class="actions responsavel-search">
+      <input id="responsavel-search"
+             type="search"
+             placeholder="Pesquisar nome ou sobrenome…"
+             autocomplete="off"
+             autofocus>
+      <button class="btn btn-outline" type="submit">
+        Buscar
+      </button>
+    </div>
+  </form>
+  <p class="muted" id="responsavel-status" role="status" aria-live="polite">
+  </p>
+  <div class="table-wrap responsavel-results">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>
+            ID
+          </th>
+          <th>
+            Colaborador
+          </th>
+        </tr>
+      </thead>
+      <tbody id="responsavel-results">
+      </tbody>
+    </table>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-outline" type="button" id="responsavel-clear">
+      Sem responsável
+    </button>
+    <button class="btn btn-primary" type="button" id="responsavel-close">
+      Fechar
+    </button>
+  </div>
+</dialog>

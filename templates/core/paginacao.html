@@ -1,1 +1,15 @@
-{% if page_obj.paginator.num_pages > 1 %}<nav class="pagination-bar" aria-label="Paginação"><span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} registros</span><div class="actions">{% if page_obj.has_previous %}<a href="?{% for chave,valor in request.GET.items %}{% if chave != 'pagina' %}{{ chave|urlencode }}={{ valor|urlencode }}&amp;{% endif %}{% endfor %}pagina={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Anterior</a>{% endif %}{% if page_obj.has_next %}<a href="?{% for chave,valor in request.GET.items %}{% if chave != 'pagina' %}{{ chave|urlencode }}={{ valor|urlencode }}&amp;{% endif %}{% endfor %}pagina={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Próxima →</a>{% endif %}</div></nav>{% endif %}
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="pagination-bar" aria-label="Paginação">
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} registros</span>
+    <div class="actions">
+      {% if page_obj.has_previous %}
+        <a href="?{% for chave,valor in request.GET.items %}{% if chave != 'pagina' %}{{ chave|urlencode }}={{ valor|urlencode }}&amp;{% endif %}{% endfor %}pagina={{ page_obj.previous_page_number }}"
+           class="btn btn-outline btn-sm">← Anterior</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?{% for chave,valor in request.GET.items %}{% if chave != 'pagina' %}{{ chave|urlencode }}={{ valor|urlencode }}&amp;{% endif %}{% endfor %}pagina={{ page_obj.next_page_number }}"
+           class="btn btn-outline btn-sm">Próxima →</a>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}

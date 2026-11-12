@@ -1,1 +1,23 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ferezini — despesas por período</title>{% include "relatorios/_estilo_impressao.html" %}</head><body><header><strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Despesas por período</span></header><h1>{{ projeto.nome }}</h1><p>{{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }} · Datas inclusivas da confirmação dos lotes · Horário de São Paulo</p>{% include "relatorios/_tabela_periodo.html" %}<footer>Ferezini · Valores históricos dos snapshots dos lotes. Total com taxas indicado separadamente.</footer></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Ferezini — despesas por período</title>
+    {% include "relatorios/_estilo_impressao.html" %}
+  </head>
+  <body>
+    <header>
+      <strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Despesas por período</span>
+    </header>
+    <h1>
+      {{ projeto.nome }}
+    </h1>
+    <p>
+      {{ inicio|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }} · Datas inclusivas da confirmação dos lotes · Horário de São Paulo
+    </p>
+    {% include "relatorios/_tabela_periodo.html" %}
+    <footer>
+      Ferezini · Valores históricos dos snapshots dos lotes. Total com taxas indicado separadamente.
+    </footer>
+  </body>
+</html>

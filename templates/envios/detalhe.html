@@ -1,10 +1,121 @@
 {% extends "base.html" %}
-{% block title %}Lote #{{ lote.pk }} · Ferezini{% endblock %}
-{% block content %}{% include "envios/_projeto_nav.html" with area="envios" %}
-<section class="card"><div class="card-body"><div class="page-heading"><div><h2>Lote #{{ lote.pk }}</h2><p class="muted">Confirmado em {{ lote.data_envio|date:"d/m/Y H:i" }} por {{ lote.enviado_por.get_full_name|default:lote.enviado_por.username }} · dados históricos preservados</p></div><a class="btn btn-primary" href="{% url 'envios:pdf' lote.pk %}">Baixar PDF</a></div>
-<p><strong>Obra na confirmação:</strong> {{ lote.dados_projeto.nome }} · {{ lote.dados_projeto.cliente_contratante }}</p>
-{% include "envios/_itens_lote.html" %}</div></section>
-<section class="card"><div class="card-body"><h2>E-mail e reenvios</h2><p><span class="badge">{{ lote.get_status_email_display }}</span> · {{ lote.tentativas_automaticas }} de 4 tentativas automáticas realizadas</p>{% if lote.proxima_tentativa %}<p>Próxima tentativa: {{ lote.proxima_tentativa|date:"d/m/Y H:i" }}.</p>{% endif %}{% if lote.ultimo_erro %}<p class="notice">{{ lote.ultimo_erro }}</p>{% endif %}{% if lote.status_email == 'INCERTO' %}<p class="notice">O SMTP pode ter aceitado a mensagem. Confira os registros do servidor e confirme que o processamento anterior terminou antes de solicitar um novo envio.</p>{% endif %}
-<form method="post" action="{% url 'envios:reenviar' lote.pk %}">{% csrf_token %}{{ form.as_p }}<button type="submit" class="btn btn-outline">Solicitar reenvio manual</button></form>
-<p class="muted">Cada solicitação usa o mesmo lote e seus valores históricos. “Aceito pelo SMTP” não confirma entrega nem leitura.</p>
-<div class="table-wrap"><table class="table"><thead><tr><th>Solicitação</th><th>Tipo / operador</th><th>Destinatários (CCO)</th><th>Resultado</th><th>Conclusão</th></tr></thead><tbody>{% for tentativa in lote.tentativas.all %}<tr><td>{{ tentativa.criado_em|date:"d/m/Y H:i" }}<br><small>{{ tentativa.identificador }}</small></td><td>{{ tentativa.get_tipo_display }}{% if tentativa.solicitado_por %}<br>{{ tentativa.solicitado_por.get_full_name|default:tentativa.solicitado_por.username }}{% endif %}</td><td>{{ tentativa.destinatarios|join:", " }}</td><td>{{ tentativa.get_resultado_display }}{% if tentativa.erro %}<br><small>{{ tentativa.erro }}</small>{% endif %}</td><td>{{ tentativa.finalizada_em|date:"d/m/Y H:i"|default:"—" }}</td></tr>{% empty %}<tr><td colspan="5">Nenhum envio solicitado.</td></tr>{% endfor %}</tbody></table></div></div></section>{% endblock %}
+
+{% block title %}
+  Lote #{{ lote.pk }} · Ferezini
+{% endblock %}
+{% block content %}
+  {% include "envios/_projeto_nav.html" with area="envios" %}
+  <section class="card">
+    <div class="card-body">
+      <div class="page-heading">
+        <div>
+          <h2>
+            Lote #{{ lote.pk }}
+          </h2>
+          <p class="muted">
+            Confirmado em {{ lote.data_envio|date:"d/m/Y H:i" }} por {{ lote.enviado_por.get_full_name|default:lote.enviado_por.username }} · dados históricos preservados
+          </p>
+        </div>
+        <a class="btn btn-primary" href="{% url 'envios:pdf' lote.pk %}">Baixar PDF</a>
+      </div>
+      <p>
+        <strong>Obra na confirmação:</strong> {{ lote.dados_projeto.nome }} · {{ lote.dados_projeto.cliente_contratante }}
+      </p>
+      {% include "envios/_itens_lote.html" %}
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-body">
+      <h2>
+        E-mail e reenvios
+      </h2>
+      <p>
+        <span class="badge">{{ lote.get_status_email_display }}</span> · {{ lote.tentativas_automaticas }} de 4 tentativas automáticas realizadas
+      </p>
+      {% if lote.proxima_tentativa %}
+        <p>
+          Próxima tentativa: {{ lote.proxima_tentativa|date:"d/m/Y H:i" }}.
+        </p>
+      {% endif %}
+      {% if lote.ultimo_erro %}
+        <p class="notice">
+          {{ lote.ultimo_erro }}
+        </p>
+      {% endif %}
+      {% if lote.status_email == 'INCERTO' %}
+        <p class="notice">
+          O SMTP pode ter aceitado a mensagem. Confira os registros do servidor e confirme que o processamento anterior terminou antes de solicitar um novo envio.
+        </p>
+      {% endif %}
+      <form method="post" action="{% url 'envios:reenviar' lote.pk %}">
+        {% csrf_token %}{{ form.as_p }}
+        <button type="submit" class="btn btn-outline">
+          Solicitar reenvio manual
+        </button>
+      </form>
+      <p class="muted">
+        Cada solicitação usa o mesmo lote e seus valores históricos. “Aceito pelo SMTP” não confirma entrega nem leitura.
+      </p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                Solicitação
+              </th>
+              <th>
+                Tipo / operador
+              </th>
+              <th>
+                Destinatários (CCO)
+              </th>
+              <th>
+                Resultado
+              </th>
+              <th>
+                Conclusão
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tentativa in lote.tentativas.all %}
+              <tr>
+                <td>
+                  {{ tentativa.criado_em|date:"d/m/Y H:i" }}
+                  <br>
+                  <small>{{ tentativa.identificador }}</small>
+                </td>
+                <td>
+                  {{ tentativa.get_tipo_display }}
+                  {% if tentativa.solicitado_por %}
+                    <br>
+                    {{ tentativa.solicitado_por.get_full_name|default:tentativa.solicitado_por.username }}
+                  {% endif %}
+                </td>
+                <td>
+                  {{ tentativa.destinatarios|join:", " }}
+                </td>
+                <td>
+                  {{ tentativa.get_resultado_display }}
+                  {% if tentativa.erro %}
+                    <br>
+                    <small>{{ tentativa.erro }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {{ tentativa.finalizada_em|date:"d/m/Y H:i"|default:"—" }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5">
+                  Nenhum envio solicitado.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,32 @@
+<dialog id="import-project-dialog"
+        class="app-dialog"
+        aria-labelledby="import-project-title"
+        aria-describedby="import-project-description">
+  <form method="dialog">
+    <h2 id="import-project-title">
+      Importar projeto
+    </h2>
+    <p class="muted" id="import-project-description">
+      Selecione a planilha de acompanhamento da obra. A importação de projetos por planilha estará disponível em breve.
+    </p>
+    <div class="field">
+      <label for="import-project-file">
+        Arquivo Excel
+      </label>
+      <input id="import-project-file"
+             type="file"
+             accept=".xlsx,.xls,.xlsm"
+             aria-describedby="import-project-help"
+             autofocus>
+      <small class="field-help" id="import-project-help">Formatos: .xlsm, .xlsx e .xls. O arquivo selecionado ainda não será enviado ou processado.</small>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" type="submit">
+        Fechar
+      </button>
+      <button class="btn btn-primary" type="button" disabled>
+        Importar
+      </button>
+    </div>
+  </form>
+</dialog>

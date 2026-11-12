@@ -1,2 +1,89 @@
-<div class="table-wrap"><table class="table"><thead><tr><th>Data do lote</th><th>Etapa</th><th>Item</th><th>Fornecedor</th><th>NF</th><th>Data NF</th><th>Valor histórico</th></tr></thead><tbody>{% for item in itens %}<tr><td>{{ item.lote.data_envio|date:"d/m/Y H:i" }}<br>Lote #{{ item.lote_id }}</td><td>{{ item.dados_snapshot.etapa.titulo }}</td><td>{{ item.dados_snapshot.orcamento.descricao|default:"Área geral" }}</td><td>{{ item.dados_snapshot.fornecedor }}</td><td>{{ item.dados_snapshot.numero_nf|default:"—" }}</td><td>{{ item.dados_snapshot.data_nf|default:"—" }}</td><td>R$ {{ item.valor_snapshot|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="7">Nenhuma despesa confirmada neste período.</td></tr>{% endfor %}</tbody></table></div>
-<dl><dt>Subtotal de despesas (sem taxa)</dt><dd>R$ {{ valor_despesas|floatformat:2 }}</dd><dt>Taxas aplicadas nos lotes do período</dt><dd>R$ {{ valor_taxas|floatformat:2 }}</dd><dt>Total com taxas</dt><dd><strong>R$ {{ valor_total|floatformat:2 }}</strong></dd></dl><p class="muted">Cada taxa é somada uma única vez por lote. São usados os valores históricos dos snapshots, inclusive para despesas alteradas ou inativadas depois.</p>
+{% load huminize_extras %}
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>
+          Data do lote
+        </th>
+        <th>
+          Etapa
+        </th>
+        <th>
+          Item
+        </th>
+        <th>
+          Fornecedor
+        </th>
+        <th>
+          NF
+        </th>
+        <th>
+          Data NF
+        </th>
+        <th>
+          Valor histórico
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in itens %}
+        <tr>
+          <td>
+            {{ item.lote.data_envio|date:"d/m/Y H:i" }}
+            <br>
+            Lote #{{ item.lote_id }}
+          </td>
+          <td>
+            {{ item.dados_snapshot.etapa.titulo }}
+          </td>
+          <td>
+            {{ item.dados_snapshot.orcamento.descricao|default:"Área geral" }}
+          </td>
+          <td>
+            {{ item.dados_snapshot.fornecedor }}
+          </td>
+          <td>
+            {{ item.dados_snapshot.numero_nf|default:"—" }}
+          </td>
+          <td>
+            {{ item.dados_snapshot.data_nf|default:"—" }}
+          </td>
+          <td>
+            R$ {{ item.valor_snapshot|numero_br }}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7">
+            Nenhuma despesa confirmada neste período.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<dl>
+  <dt>
+    Subtotal de despesas (sem taxa)
+  </dt>
+  <dd>
+    R$ {{ valor_despesas|numero_br }}
+  </dd>
+  <dt>
+    Taxas aplicadas nos lotes do período
+  </dt>
+  <dd>
+    R$ {{ valor_taxas|numero_br }}
+  </dd>
+  <dt>
+    Total com taxas
+  </dt>
+  <dd>
+    <strong>R$ {{ valor_total|numero_br }}</strong>
+  </dd>
+</dl>
+<p class="muted">
+  Cada taxa é somada uma única vez por lote. São usados os valores históricos dos snapshots, inclusive para despesas alteradas ou inativadas depois.
+</p>

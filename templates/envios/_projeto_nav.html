@@ -1,2 +1,21 @@
-<div class="page-heading"><div><p class="eyebrow">PROJETO / {{ projeto.get_status_display }}</p><h1>{{ projeto.nome }}</h1><p class="muted">{{ projeto.cliente_contratante|default:"Gestão financeira da obra" }}</p></div><a class="btn btn-outline" href="{% url 'projetos:editar' projeto.pk %}">Dados do projeto</a></div>
-<nav class="tabs" aria-label="Áreas do projeto"><a class="tab" href="{% url 'projetos:detalhe' projeto.pk %}?aba=geral">Geral</a><a class="tab" href="{% url 'projetos:detalhe' projeto.pk %}?aba=orcamento">Orçamento</a><a class="tab {% if area == 'envios' %}active{% endif %}" href="{% url 'envios:painel' projeto.pk %}">Envio de Despesas</a><a class="tab {% if area == 'relatorios' %}active{% endif %}" href="{% url 'relatorios:despesas' projeto.pk %}">Relatório de Despesa</a></nav>
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">
+      PROJETO / {{ projeto.get_status_display }}
+    </p>
+    <h1>
+      {{ projeto.nome }}
+    </h1>
+    <p class="muted">
+      {{ projeto.cliente_contratante|default:"Gestão financeira da obra" }}
+    </p>
+  </div>
+  <a class="btn btn-outline" href="{% url 'projetos:editar' projeto.pk %}">Dados do projeto</a>
+</div>
+<nav class="tabs" aria-label="Áreas do projeto">
+  <a class="tab" href="{% url 'projetos:detalhe' projeto.pk %}?aba=geral">Geral</a><a class="tab" href="{% url 'projetos:detalhe' projeto.pk %}?aba=orcamento">Orçamento</a><a class="tab {% if area == 'envios' %}active{% endif %}" href="{% url 'envios:painel' projeto.pk %}">Envio de Despesas</a><a class="tab
+          {% if area == 'relatorios' %}
+            active
+          {% endif %}"
+   href="{% url 'relatorios:despesas' projeto.pk %}">Relatório de Despesa</a>
+</nav>

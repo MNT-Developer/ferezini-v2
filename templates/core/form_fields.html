@@ -1,3 +1,44 @@
-{% if form.non_field_errors %}<div class="notice notice-error">{{ form.non_field_errors }}</div>{% endif %}
-{% for field in form.hidden_fields %}{{ field }}{% for error in field.errors %}<div class="notice notice-error">{{ error }}</div>{% endfor %}{% endfor %}
-<div class="form-grid">{% for field in form.visible_fields %}<div class="field {% if field.field.widget.input_type == 'checkbox' %}field-check{% endif %}">{% if field.field.widget.input_type == 'checkbox' %}{{ field }}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% else %}<label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required" aria-label="obrigatório"> *</span>{% endif %}</label>{{ field }}{% endif %}{% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>{% endfor %}</div>
+{% if form.non_field_errors %}
+  <div class="notice notice-error">
+    {{ form.non_field_errors }}
+  </div>
+{% endif %}
+{% for field in form.hidden_fields %}
+  {{ field }}
+  {% for error in field.errors %}
+    <div class="notice notice-error">
+      {{ error }}
+    </div>
+  {% endfor %}
+{% endfor %}
+<div class="form-grid{% if grid_class %} {{ grid_class }}{% endif %}">
+  {% for field in form.visible_fields %}
+    <div class="field
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  field-check
+                {% elif field.field.widget.input_type == 'password' %}
+                  field-password
+                {% endif %}">
+      {% if field.field.widget.input_type == 'checkbox' %}
+        {{ field }}
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}
+        </label>
+      {% else %}
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}
+          {% if field.field.required %}
+            <span class="required" aria-label="obrigatório"> *</span>
+          {% endif %}
+        </label>
+        {{ field }}
+      {% endif %}
+      {% if field.help_text %}
+        <small class="field-help">{{ field.help_text }}</small>
+      {% endif %}
+      {% for error in field.errors %}
+        <small class="field-error">{{ error }}</small>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>

@@ -14,6 +14,7 @@ class Usuario(AbstractUser):
     telefone = models.CharField("telefone", max_length=30, blank=True)
     cargo = models.CharField("cargo", max_length=100, blank=True)
     permissao_diretoria = models.BooleanField("Diretoria", default=False)
+    permissao_administrativo = models.BooleanField("Administrativo", default=False)
     permissao_gestao_funcionario = models.BooleanField("Gestão de funcionários", default=False)
     permissao_acesso_geral = models.BooleanField("Acesso geral", default=False)
     permissao_gestao_projetos = models.BooleanField("Gestão de projetos", default=False)

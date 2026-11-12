@@ -1,20 +1,60 @@
 {% extends 'base.html' %}
-{% block title %}Entrar{% endblock %}
+
+{% block title %}
+  Entrar
+{% endblock %}
 {% block content %}
-<section class="login-card">
-  <div class="brand brand-dark">ferezini<span>GESTÃO DE OBRAS</span></div>
-  <div class="login-divider"></div>
-  <p class="eyebrow">BEM-VINDO</p>
-  <h1>Acesse seu espaço<br>de trabalho.</h1>
-  <p class="muted">Orçamentos, despesas e obras em um só lugar.</p>
-  {% if form.errors %}<div class="notice notice-error">Não foi possível entrar. Confira seu usuário e sua senha.</div>{% endif %}
-  <form method="post" class="stack-form">{% csrf_token %}
-    <input type="hidden" name="next" value="{{ next }}">
-    <div class="field"><label for="id_username">Usuário</label><input name="username" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus required></div>
-    <div class="field"><label for="id_password">Senha</label><input name="password" type="password" id="id_password" autocomplete="current-password" required></div>
-    <button class="btn btn-primary btn-full" type="submit">Entrar <span aria-hidden="true">→</span></button>
-  </form>
-  <p class="login-note">Precisa de acesso? Fale com o responsável pela gestão de funcionários.</p>
-</section>
-<p class="login-footer">Ferezini · Gestão financeira de obras · V1</p>
+  <section class="login-card">
+    <div class="brand brand-dark">
+      ferezini<span>GESTÃO DE OBRAS</span>
+    </div>
+    <div class="login-divider">
+    </div>
+    <p class="eyebrow">
+      BEM-VINDO
+    </p>
+    <h1>
+      Acesse seu espaço
+      <br>
+      de trabalho.
+    </h1>
+    <p class="muted">
+      Orçamentos, despesas e obras em um só lugar.
+    </p>
+    {% if form.errors %}
+      <div class="notice notice-error">
+        Não foi possível entrar. Confira seu usuário e sua senha.
+      </div>
+    {% endif %}
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="id_username">
+          Usuário
+        </label>
+        <input name="username"
+               id="id_username"
+               value="{{ form.username.value|default:'' }}"
+               autocomplete="username"
+               autofocus
+               required>
+      </div>
+      <div class="field">
+        <label for="id_password">
+          Senha
+        </label>
+        <input name="password" type="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-full" type="submit">
+        Entrar <span aria-hidden="true">→</span>
+      </button>
+    </form>
+    <p class="login-note">
+      Precisa de acesso? Fale com o responsável pela Gestão de Usuários.
+    </p>
+  </section>
+  <p class="login-footer">
+    Ferezini · Gestão financeira de obras · V1
+  </p>
 {% endblock %}

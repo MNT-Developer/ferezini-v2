@@ -59,7 +59,7 @@ class LotesTestes(EnviosFixture, TestCase):
         self.client.force_login(self.usuario)
         resposta = self.client.get(reverse("envios:painel", args=[self.projeto.pk]))
         self.assertContains(resposta, 'value="31,53"')
-        self.assertContains(resposta, 'id="justificativa-taxa" hidden')
+        self.assertRegex(resposta.content.decode(), r'id="justificativa-taxa"\s+hidden\b')
         self.assertContains(resposta, 'js/envios.js')
 
     def test_taxa_editada_exige_justificativa_no_servidor(self):
@@ -205,8 +205,8 @@ class LotesTestes(EnviosFixture, TestCase):
             conteudo = gerar_pdf_lote(lote)
         self.assertTrue(conteudo.startswith(b"%PDF"))
         html.return_value.write_pdf.assert_called_once_with()
-        self.assertIn("<dt>Taxa</dt>", html.call_args.kwargs["string"])
-        self.assertNotIn("<dt>Taxa calculada</dt>", html.call_args.kwargs["string"])
+        self.assertInHTML("<dt>Taxa</dt>", html.call_args.kwargs["string"])
+        self.assertInHTML("<dt>Taxa calculada</dt>", html.call_args.kwargs["string"], count=0)
         self.assertIn("Fornecedor", html.call_args.kwargs["string"])
 
     def test_pdf_indisponivel_retorna_503_amigavel(self):

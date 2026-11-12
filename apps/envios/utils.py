@@ -70,14 +70,17 @@ def despesas_elegiveis(projeto):
 def dados_do_projeto(projeto):
     campos = (
         "id", "nome", "descricao", "cliente_contratante", "cpf_cnpj",
-        "endereco_obra", "responsavel_tecnico", "data_inicio",
+        "endereco_obra", "data_inicio",
         "previsao_termino", "data_conclusao", "status",
     )
-    return {
+    dados = {
         campo: getattr(projeto, campo).isoformat()
         if hasattr(getattr(projeto, campo), "isoformat") else getattr(projeto, campo)
         for campo in campos
     }
+    dados["responsavel_tecnico"] = projeto.nome_responsavel_tecnico
+    dados["responsavel_tecnico_id"] = projeto.responsavel_tecnico_id
+    return dados
 
 
 def snapshot_despesa(despesa, projeto_snapshot):

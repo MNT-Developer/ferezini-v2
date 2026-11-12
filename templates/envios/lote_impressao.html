@@ -1,1 +1,31 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ferezini — lote {{ lote.pk }}</title>{% include "relatorios/_estilo_impressao.html" %}</head><body><header><strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Relatório de envio</span></header><h1>{{ lote.dados_projeto.nome }}</h1><p>{{ lote.dados_projeto.cliente_contratante }}<br>{{ lote.dados_projeto.endereco_obra }}</p><p>Lote #{{ lote.pk }} · Confirmação: {{ lote.data_envio|date:"d/m/Y H:i" }} · Layout {{ lote.versao_layout }}</p><p>Valores históricos registrados na confirmação. O total inclui a taxa aplicada.</p>{% include "envios/_itens_lote.html" %}<footer>Ferezini · Documento gerado sob demanda a partir dos snapshots do lote.</footer></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Ferezini — lote {{ lote.pk }}</title>
+    {% include "relatorios/_estilo_impressao.html" %}
+  </head>
+  <body>
+    <header>
+      <strong class="marca">FEREZINI</strong><span>Gestão Financeira de Obras · Relatório de envio</span>
+    </header>
+    <h1>
+      {{ lote.dados_projeto.nome }}
+    </h1>
+    <p>
+      {{ lote.dados_projeto.cliente_contratante }}
+      <br>
+      {{ lote.dados_projeto.endereco_obra }}
+    </p>
+    <p>
+      Lote #{{ lote.pk }} · Confirmação: {{ lote.data_envio|date:"d/m/Y H:i" }} · Layout {{ lote.versao_layout }}
+    </p>
+    <p>
+      Valores históricos registrados na confirmação. O total inclui a taxa aplicada.
+    </p>
+    {% include "envios/_itens_lote.html" %}
+    <footer>
+      Ferezini · Documento gerado sob demanda a partir dos snapshots do lote.
+    </footer>
+  </body>
+</html>

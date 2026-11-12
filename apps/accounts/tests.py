@@ -14,23 +14,25 @@ from .utils import salvar_funcionario
 
 class PermissoesTests(TestCase):
     def test_todas_as_combinacoes_cumulativas(self):
-        campos = ["permissao_diretoria", "permissao_gestao_funcionario", "permissao_acesso_geral",
+        campos = ["permissao_diretoria", "permissao_administrativo", "permissao_gestao_funcionario", "permissao_acesso_geral",
                   "permissao_gestao_projetos", "permissao_relatorios_gerais"]
-        for flags in product((False, True), repeat=5):
+        for flags in product((False, True), repeat=6):
             usuario = Usuario(username="operador", **dict(zip(campos, flags)))
-            diretoria, funcionarios, geral, projetos, relatorios = flags
+            diretoria, administrativo, funcionarios, geral, projetos, relatorios = flags
             with self.subTest(flags=flags):
-                self.assertEqual(tem_permissao(usuario, "projetos"), diretoria or geral or projetos)
-                self.assertEqual(tem_permissao(usuario, "funcionarios"), funcionarios)
+                self.assertEqual(tem_permissao(usuario, "projetos"), diretoria or administrativo or geral or projetos)
+                self.assertEqual(tem_permissao(usuario, "funcionarios"), diretoria or funcionarios)
                 self.assertEqual(tem_permissao(usuario, "relatorios_gerais"), diretoria or geral or relatorios)
                 self.assertEqual(tem_permissao(usuario, "diretoria"), diretoria)
+                self.assertEqual(tem_permissao(usuario, "responsavel_tecnico"), diretoria or administrativo)
 
     def test_superusuario_tecnico_nao_recebe_permissao_de_negocio(self):
         usuario = Usuario.objects.create_superuser("tecnico", password="senha-testes")
-        for area in ("projetos", "funcionarios", "relatorios_gerais", "diretoria"):
+        for area in ("projetos", "relatorios_gerais", "diretoria", "responsavel_tecnico"):
             self.assertFalse(tem_permissao(usuario, area))
             with self.assertRaises(PermissionDenied):
                 exigir_permissao(usuario, area)
+        self.assertTrue(tem_permissao(usuario, "funcionarios"))
 
     def test_usuario_inativo_nao_tem_acesso(self):
         usuario = Usuario(username="inativo", is_active=False, permissao_diretoria=True)
@@ -41,8 +43,8 @@ class PermissoesTests(TestCase):
         self.client.force_login(usuario)
         response = self.client.get(reverse("inicio"))
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, reverse("accounts:lista"))
-        self.assertEqual(self.client.get(reverse("accounts:lista")).status_code, 403)
+        self.assertContains(response, reverse("accounts:lista"))
+        self.assertEqual(self.client.get(reverse("accounts:lista")).status_code, 200)
         self.assertContains(self.client.get(reverse("diretoria")), "Em desenvolvimento")
         self.assertContains(self.client.get(reverse("relatorios_gerais")), "Em desenvolvimento")
 
@@ -80,6 +82,13 @@ class FuncionariosTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         return form
 
+    def test_cadastro_concede_nova_permissao_administrativo(self):
+        form = self.formulario(permissao_administrativo="on")
+        usuario = salvar_funcionario(self.operador, form)
+        self.assertTrue(usuario.permissao_administrativo)
+        historico = HistoricoAlteracao.objects.get(objeto_id=usuario.pk, entidade="usuario")
+        self.assertTrue(historico.novos["permissao_administrativo"])
+
     def test_cadastro_e_auditoria_sem_senha(self):
         usuario = salvar_funcionario(self.operador, self.formulario())
         self.assertTrue(usuario.check_password("SenhaForte!8912"))
@@ -101,9 +110,9 @@ class FuncionariosTests(TestCase):
         self.assertEqual(usuario.first_name, "Maria")
 
     def test_servico_exige_permissao(self):
-        diretor = Usuario.objects.create_user("diretor", permissao_diretoria=True)
+        sem_permissao = Usuario.objects.create_user("administrativo", permissao_administrativo=True)
         with self.assertRaises(PermissionDenied):
-            salvar_funcionario(diretor, self.formulario())
+            salvar_funcionario(sem_permissao, self.formulario())
 
     def test_edicao_preserva_campos_tecnicos_e_senha_mais_recentes(self):
         usuario = salvar_funcionario(self.operador, self.formulario())

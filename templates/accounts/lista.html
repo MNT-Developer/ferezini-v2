@@ -1,3 +1,132 @@
 {% extends 'base.html' %}
-{% block title %}Funcionários{% endblock %}
-{% block content %}<div class="page-heading"><div><p class="eyebrow">EQUIPE</p><h1>Funcionários</h1><p class="muted">Gerencie acessos e permissões da equipe.</p></div><a href="{% url 'accounts:criar' %}" class="btn btn-primary">+ Novo funcionário</a></div><section class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Funcionário</th><th>Usuário</th><th>E-mail</th><th>Situação</th><th></th></tr></thead><tbody>{% for funcionario in usuarios %}<tr><td class="table-title">{{ funcionario.get_full_name|default:funcionario.username }}</td><td>{{ funcionario.username }}</td><td>{{ funcionario.email|default:'—' }}</td><td>{% if funcionario.is_active %}<span class="badge status-em_andamento">Ativo</span>{% else %}<span class="badge">Inativo</span>{% endif %}</td><td><a href="{% url 'accounts:editar' funcionario.pk %}" class="btn btn-outline btn-sm">Gerenciar</a></td></tr>{% empty %}<tr><td colspan="5" class="empty-state">Nenhum funcionário encontrado.</td></tr>{% endfor %}</tbody></table></div></section>{% endblock %}
+
+{% block title %}
+  Gestão de Usuários
+{% endblock %}
+{% block content %}
+  <div class="page-heading user-management-heading">
+    <div>
+      <p class="eyebrow">
+        ACESSOS E PERMISSÕES
+      </p>
+      <h1>
+        Gestão de Usuários
+      </h1>
+      <p class="muted">
+        Cadastre usuários, atualize permissões e gerencie o acesso da equipe.
+      </p>
+    </div>
+    <a href="{% url 'accounts:criar' %}" class="btn btn-primary">+ Novo usuário</a>
+  </div>
+  <section class="card">
+    <form class="toolbar" method="get">
+      <div class="search-field">
+        <label class="visually-hidden" for="busca-usuario">
+          Buscar usuários
+        </label>
+        <input id="busca-usuario"
+               name="q"
+               type="search"
+               value="{{ busca }}"
+               placeholder="Buscar nome, usuário ou e-mail…">
+      </div>
+      <label class="visually-hidden" for="status-usuario">
+        Situação
+      </label>
+      <select id="status-usuario" name="status">
+        <option value="">
+          Todas as situações
+        </option>
+        <option value="ativo" {% if status == 'ativo' %}selected{% endif %}>
+          Ativos
+        </option>
+        <option value="inativo" {% if status == 'inativo' %}selected{% endif %}>
+          Inativos
+        </option>
+      </select>
+      <button class="btn btn-outline" type="submit">
+        Filtrar
+      </button>
+      {% if busca or status %}
+        <a href="{% url 'accounts:lista' %}" class="text-link">Limpar</a>
+      {% endif %}
+    </form>
+    <div class="section-heading">
+      <h2>
+        Usuários cadastrados
+      </h2>
+      <span class="muted">Registros: {{ page_obj.paginator.count }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>
+              Nome
+            </th>
+            <th>
+              Usuário
+            </th>
+            <th>
+              E-mail
+            </th>
+            <th>
+              Situação
+            </th>
+            <th>
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for usuario in usuarios %}
+            <tr>
+              <td>
+                <a href="{% url 'accounts:editar' usuario.pk %}" class="table-title">{{ usuario.get_full_name|default:usuario.username }}</a>
+              </td>
+              <td>
+                {{ usuario.username }}
+              </td>
+              <td>
+                {{ usuario.email|default:'—' }}
+              </td>
+              <td>
+                {% if usuario.is_active %}
+                  <span class="badge status-em_andamento">Ativo</span>
+                {% else %}
+                  <span class="badge">Inativo</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="actions">
+                  <a href="{% url 'accounts:editar' usuario.pk %}" class="btn btn-outline btn-sm">Editar</a>
+                  {% if usuario.is_active %}
+                    <a href="{% url 'accounts:inativar' usuario.pk %}"
+                       class="btn btn-quiet btn-sm"
+                       aria-label="Inativar {{ usuario.get_full_name|default:usuario.username }}">Inativar</a>
+                  {% else %}
+                    <a href="{% url 'accounts:reativar' usuario.pk %}"
+                       class="btn btn-outline btn-sm"
+                       aria-label="Reativar {{ usuario.get_full_name|default:usuario.username }}">Reativar</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="empty-state">
+                <h3>
+                  Nenhum usuário encontrado
+                </h3>
+                <p>
+                  Experimente ajustar os filtros ou cadastre um novo usuário.
+                </p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "core/paginacao.html" %}
+  </section>
+{% endblock %}

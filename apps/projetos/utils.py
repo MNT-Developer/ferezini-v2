@@ -3,13 +3,14 @@ import uuid
 from decimal import Decimal
 from functools import wraps
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Max, Prefetch
 from django.http import JsonResponse
 
-from apps.accounts.permissions import exigir_permissao
+from apps.accounts.permissions import exigir_permissao, pode_alterar_responsavel
 from apps.auditoria.utils import registrar
 from apps.despesas.models import Despesa
 from apps.orcamentos.models import Orcamento
@@ -84,11 +85,13 @@ def serializar_registro(objeto):
             dados["exige_justificativa"] = objeto.despesas.exists()
     elif isinstance(objeto, Despesa):
         dados["exige_justificativa"] = bool(objeto.lote_envio_id)
+    elif isinstance(objeto, Projeto):
+        dados["responsavel_tecnico_nome"] = objeto.nome_responsavel_tecnico
     return dados
 
 
 def consultar_projetos():
-    return Projeto.objects.prefetch_related(
+    return Projeto.objects.select_related("responsavel_tecnico").prefetch_related(
         Prefetch("etapas", queryset=Etapa.objects.prefetch_related("orcamentos", "despesas")),
         "lotes", "emails",
     )
@@ -352,6 +355,16 @@ def salvar_projeto(usuario, form):
     projeto = Projeto(criado_por=usuario) if novo else Projeto.objects.select_for_update().get(pk=form.instance.pk)
     if not novo:
         validar_versao(projeto, form.cleaned_data["versao"])
+    responsavel = form.cleaned_data["responsavel_tecnico"]
+    if projeto.responsavel_tecnico_id != getattr(responsavel, "pk", None):
+        # A autorização usa o estado bloqueado, nunca a instância alterada pelo ModelForm.
+        if not pode_alterar_responsavel(usuario, projeto):
+            raise PermissionDenied("Somente Diretoria ou Administrativo podem alterar o responsável técnico já vinculado.")
+        if responsavel is not None:
+            responsavel = get_user_model().objects.select_for_update().get(pk=responsavel.pk)
+            if not responsavel.is_active or responsavel.is_superuser:
+                raise ValidationError({"responsavel_tecnico": "Selecione um colaborador ativo que não seja superusuário."})
+            form.cleaned_data["responsavel_tecnico"] = responsavel
     anteriores = {} if novo else serializar_registro(projeto)
     for campo in form._meta.fields:
         setattr(projeto, campo, form.cleaned_data[campo])

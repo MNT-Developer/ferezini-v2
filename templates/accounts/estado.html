@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if ativar %}
+    Reativar
+  {% else %}
+    Inativar
+  {% endif %}
+  usuário
+{% endblock %}
+{% block content %}
+  <a href="{% url 'accounts:lista' %}" class="back-link">← Gestão de Usuários</a>
+  <section class="card card-body">
+    <h1>
+      {% if ativar %}
+        Reativar
+      {% else %}
+        Inativar
+      {% endif %}
+      usuário
+    </h1>
+    <p>
+      <strong>{{ usuario.get_full_name|default:usuario.username }}</strong> · {{ usuario.username }}
+    </p>
+    {% if ativar %}
+      <p class="muted">
+        O usuário poderá acessar o sistema novamente, conforme suas permissões.
+      </p>
+    {% else %}
+      <p class="muted">
+        O usuário ficará sem acesso ao sistema. Seus vínculos com projetos e seu histórico serão preservados.
+      </p>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {% include 'core/form_fields.html' %}
+      <div class="form-actions">
+        <a href="{% url 'accounts:lista' %}" class="btn btn-outline">Cancelar</a>
+        <button class="btn {% if ativar %}btn-primary{% else %}btn-danger{% endif %}" type="submit">
+          {% if ativar %}
+            Reativar
+          {% else %}
+            Inativar
+          {% endif %}
+          usuário
+        </button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

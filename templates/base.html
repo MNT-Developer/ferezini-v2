@@ -1,44 +1,104 @@
 {% load static %}
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>{% block title %}Gestão de obras{% endblock %} · Ferezini</title>
-  <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  {% block extra_head %}{% endblock %}
-</head>
-<body class="{% if not user.is_authenticated %}anonymous{% endif %}">
-  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-  {% if user.is_authenticated %}
-  <aside class="sidebar" id="sidebar" aria-label="Menu principal">
-    <a href="{% url 'inicio' %}" class="brand" aria-label="Ferezini, início">ferezini<span>GESTÃO DE OBRAS</span></a>
-    <div class="sidebar-label">ESPAÇO DE TRABALHO</div>
-    <nav>
-      <a href="{% url 'inicio' %}" {% if request.resolver_match.url_name == 'inicio' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">⌂</span>Início</a>
-      {% if perms_app.projetos %}<a href="{% url 'projetos:listar' %}" {% if request.resolver_match.app_name == 'projetos' or request.resolver_match.app_name == 'envios' or request.resolver_match.app_name == 'relatorios' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">▦</span>Projetos</a>{% endif %}
-      {% if perms_app.funcionarios %}<a href="{% url 'accounts:lista' %}" {% if request.resolver_match.app_name == 'accounts' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true">♙</span>Funcionários</a>{% endif %}
-      {% if perms_app.relatorios_gerais %}<a href="{% url 'relatorios_gerais' %}"><span class="nav-icon" aria-hidden="true">▤</span>Relatórios Gerais</a>{% endif %}
-      {% if perms_app.diretoria %}<a href="{% url 'diretoria' %}"><span class="nav-icon" aria-hidden="true">◇</span>Diretoria</a>{% endif %}
-    </nav>
-    <div class="sidebar-foot"><span class="version">V1</span><p>Gestão financeira<br>de obras</p></div>
-  </aside>
-  <div class="workspace">
-    <header class="topbar">
-      <button class="icon-button" id="toggle-sidebar" type="button" aria-label="Recolher ou abrir menu" aria-controls="sidebar" aria-expanded="true">☰</button>
-      <span class="topbar-title">Controle financeiro</span>
-      <div class="user-menu"><span class="avatar" aria-hidden="true">{{ user.first_name|default:user.username|first|upper }}</span><span>{{ user.get_full_name|default:user.username }}</span><form action="{% url 'logout' %}" method="post">{% csrf_token %}<button type="submit" class="btn btn-quiet">Sair</button></form></div>
-    </header>
-    <main id="conteudo" class="main-content">
-  {% else %}<main id="conteudo" class="login-main">{% endif %}
-      {% if messages %}<div aria-live="polite">{% for message in messages %}<div class="notice {% if message.tags %}notice-{{ message.tags }}{% endif %}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
-      {% block content %}{% endblock %}
-    </main>
-  {% if user.is_authenticated %}</div>{% endif %}
-  <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="{% static 'js/app.js' %}" defer></script>
-  {% block extra_js %}{% endblock %}
-</body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>
+      {% block title %}
+        Gestão de obras
+      {% endblock %}
+    · Ferezini</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_head %}
+    {% endblock %}
+  </head>
+  <body class="{% if not user.is_authenticated %}anonymous{% endif %}">
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    {% if user.is_authenticated %}
+      <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+        <a href="{% url 'inicio' %}" class="brand" aria-label="Ferezini, início">ferezini<span>GESTÃO DE OBRAS</span></a>
+        <div class="sidebar-label">
+          ESPAÇO DE TRABALHO
+        </div>
+        <nav>
+          <a href="{% url 'inicio' %}"
+             {% if request.resolver_match.url_name == 'inicio' %}
+               aria-current="page"
+             {% endif %}><span class="nav-icon" aria-hidden="true">⌂</span>Início</a>
+          {% if perms_app.projetos %}
+            <a href="{% url 'projetos:listar' %}"
+               {% if request.resolver_match.app_name == 'projetos' or request.resolver_match.app_name == 'envios' or request.resolver_match.app_name == 'relatorios' %}
+                 aria-current="page"
+               {% endif %}><span class="nav-icon" aria-hidden="true">▦</span>Projetos</a>
+          {% endif %}
+          {% if perms_app.funcionarios %}
+            <a href="{% url 'accounts:lista' %}"
+               {% if request.resolver_match.app_name == 'accounts' %}
+                 aria-current="page"
+               {% endif %}><span class="nav-icon" aria-hidden="true">♙</span>Gestão de Usuários</a>
+          {% endif %}
+          {% if perms_app.relatorios_gerais %}
+            <a href="{% url 'relatorios_gerais' %}"><span class="nav-icon" aria-hidden="true">▤</span>Relatórios Gerais</a>
+          {% endif %}
+          {% if perms_app.diretoria %}
+            <a href="{% url 'diretoria' %}"><span class="nav-icon" aria-hidden="true">◇</span>Diretoria</a>
+          {% endif %}
+        </nav>
+        <div class="sidebar-foot">
+          <span class="version">V1</span>
+          <p>
+            Gestão financeira
+            <br>
+            de obras
+          </p>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <button class="icon-button"
+                  id="toggle-sidebar"
+                  type="button"
+                  aria-label="Recolher ou abrir menu"
+                  aria-controls="sidebar"
+                  aria-expanded="true">
+            ☰
+          </button>
+          <span class="topbar-title">Controle financeiro</span>
+          <div class="user-menu">
+            <span class="avatar" aria-hidden="true">{{ user.first_name|default:user.username|first|upper }}</span><span>{{ user.get_full_name|default:user.username }}</span>
+            <form action="{% url 'logout' %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-quiet">
+                Sair
+              </button>
+            </form>
+          </div>
+        </header>
+      {% endif %}
+      <main id="conteudo" class="{% if user.is_authenticated %}main-content{% else %}login-main{% endif %}">
+        {% if messages %}
+          <div aria-live="polite">
+            {% for message in messages %}
+              <div class="notice {% if message.tags %}notice-{{ message.tags }}{% endif %}" role="status">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}
+        {% endblock %}
+      </main>
+      {% if user.is_authenticated %}
+      </div>
+    {% endif %}
+    <div id="toast" class="app-toast" role="status" aria-live="polite" hidden>
+    </div>
+    <script src="{% static 'js/app.js' %}" defer></script>
+    {% block extra_js %}
+    {% endblock %}
+  </body>
 </html>

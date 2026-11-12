@@ -21,8 +21,12 @@ if os.getenv("DB_ENGINE", "mysql") != "mysql":
     raise ImproperlyConfigured("A aplicação usa MySQL/MariaDB. SQLite é exclusivo dos testes isolados.")
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
-    "django.contrib.messages", "django.contrib.staticfiles", "apps.core", "apps.accounts.apps.AccountsConfig",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "apps.core", "apps.accounts.apps.AccountsConfig",
     "apps.projetos", "apps.orcamentos", "apps.despesas", "apps.auditoria",
     "apps.envios", "apps.relatorios",
 ]
@@ -38,10 +42,15 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"], "APP_DIRS": True,
-    "OPTIONS": {"context_processors": [
-        "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
-        "django.contrib.messages.context_processors.messages", "apps.accounts.context_processors.permissoes",
-    ]},
+    "OPTIONS": {
+        "libraries": {
+            "huminize_extras": "apps.core.templatetags.huminize_extras",
+        },
+        "context_processors": [
+            "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
+            "django.contrib.messages.context_processors.messages", "apps.accounts.context_processors.permissoes",
+        ],
+    },
 }]
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"

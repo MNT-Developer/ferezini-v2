@@ -16,7 +16,7 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
     tests/                  # testes JavaScript
     test_settings.py        # isolamento dos testes automatizados
     tests_deploy.py
-    versao/v.0.0.3.md
+    versao/v.0.0.4.md         # evolução funcional atual
 ```
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
@@ -55,16 +55,36 @@ python -m venv .venv
 .\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Login: `/entrar/`. Admin: `/admin/`. `criar_gestor` cria as permissões operacionais; `createsuperuser` concede privilégios técnicos independentes das cinco flags do sistema.
+Login: `/entrar/`. Admin: `/admin/`. `criar_gestor` cria as permissões operacionais; `createsuperuser` concede privilégios técnicos independentes das seis flags do sistema.
+
+O responsável técnico é um colaborador opcional. Quem acessa projetos pode fazer o primeiro vínculo; depois, somente Diretoria ou Administrativo podem substituí-lo ou removê-lo. A seleção mostra colaboradores ativos que não sejam superusuários. Textos anteriores à conversão para usuário ficam preservados no cadastro, sem associação automática.
+
+O módulo **Gestão de Usuários** permite cadastrar, editar, inativar e reativar usuários, com busca, filtro de situação e paginação de 25 registros. O acesso exige Diretoria, Gestão de funcionários ou superusuário. As contas de superusuários ficam fora da listagem operacional. A inativação preserva vínculos e histórico e impede o acesso enquanto a conta estiver inativa.
+
+Somente Diretoria ou superusuários podem visualizar/gerenciar contas da Diretoria e conceder essa permissão, tanto no cadastro quanto na edição. Para os demais gestores, essas contas não aparecem nas listas ou pesquisas e a flag de Diretoria não aparece no formulário. As mesmas restrições são aplicadas ao Django Admin.
+
+## Formatação dos templates
+
+Os templates usam UTF-8, finais de linha LF e indentação de dois espaços, conforme o [guia de estilo do Django](https://docs.djangoproject.com/en/5.2/internals/contributing/writing-code/coding-style/). A configuração do formatador fica em [`.codex/djlint.toml`](.codex/djlint.toml).
+
+Para formatar novamente ou conferir o padrão, instale a ferramenta de desenvolvimento no ambiente virtual:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install djlint==1.36.4
+.\.venv\Scripts\python.exe .codex/scripts/formatar_templates.py
+.\.venv\Scripts\python.exe .codex/scripts/formatar_templates.py --check
+```
+
+No Linux, use o executável do virtualenv correspondente. O formatador atua somente em `templates/`; ele não é uma dependência de execução da aplicação.
 
 ## Verificações
 
 ```powershell
 .\.venv\Scripts\python.exe .codex/scripts/testar.py
 .\.venv\Scripts\python.exe .codex/scripts/testar.py --mysql --pdf-real
-node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs
+node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex/tests/responsavel-tecnico.test.cjs
 ```
 
 No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF exige WeasyPrint/Pango.
 
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md) e [mudanças v.0.0.3](.codex/versao/v.0.0.3.md).
+Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).

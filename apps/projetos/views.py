@@ -1,12 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from apps.accounts.permissions import exigir_permissao
+from apps.accounts.permissions import exigir_permissao, pode_alterar_responsavel
 
 from .forms import ProjetoForm
 from .models import Etapa, Projeto
@@ -41,7 +44,7 @@ def listar(request):
 @require_http_methods(["GET", "POST"])
 def novo(request):
     exigir_permissao(request.user, "projetos")
-    form = ProjetoForm(request.POST or None)
+    form = ProjetoForm(request.POST or None, usuario=request.user)
     if request.method == "POST" and form.is_valid():
         try:
             projeto = salvar_projeto(request.user, form)
@@ -57,8 +60,8 @@ def novo(request):
 @require_http_methods(["GET", "POST"])
 def editar(request, pk):
     exigir_permissao(request.user, "projetos")
-    projeto = get_object_or_404(Projeto, pk=pk)
-    form = ProjetoForm(request.POST or None, instance=projeto)
+    projeto = get_object_or_404(Projeto.objects.select_related("responsavel_tecnico"), pk=pk)
+    form = ProjetoForm(request.POST or None, instance=projeto, usuario=request.user)
     if request.method == "POST" and form.is_valid():
         try:
             projeto = salvar_projeto(request.user, form)
@@ -68,6 +71,28 @@ def editar(request, pk):
             messages.success(request, "Projeto atualizado.")
             return redirect("projetos:detalhe", pk=projeto.pk)
     return render(request, "projetos/form.html", {"form": form, "projeto": projeto})
+
+
+@login_required
+@require_GET
+def colaboradores(request, pk=None):
+    exigir_permissao(request.user, "projetos")
+    if pk is not None:
+        projeto = get_object_or_404(Projeto, pk=pk)
+        if not pode_alterar_responsavel(request.user, projeto):
+            raise PermissionDenied("Você não pode alterar o responsável técnico deste projeto.")
+    usuarios = get_user_model().objects.filter(is_active=True, is_superuser=False).only("pk", "first_name", "last_name", "username")
+    busca = request.GET.get("q", "").strip()
+    for termo in busca.split():
+        usuarios = usuarios.filter(Q(first_name__icontains=termo) | Q(last_name__icontains=termo))
+    usuarios = usuarios.order_by(Lower("first_name"), Lower("last_name"), "pk")
+    if not busca:
+        usuarios = usuarios[:10]
+    return JsonResponse({"colaboradores": [
+        {"id": usuario.pk, "primeiro_nome": usuario.first_name or usuario.username,
+         "nome": usuario.get_full_name() or usuario.username}
+        for usuario in usuarios
+    ], "limitado": not bool(busca)})
 
 
 @login_required

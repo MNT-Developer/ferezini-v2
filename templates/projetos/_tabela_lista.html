@@ -1,0 +1,71 @@
+{% load huminize_extras %}
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>
+          Projeto / Cliente
+        </th>
+        <th>
+          Status
+        </th>
+        <th class="number">
+          Orçado
+        </th>
+        <th class="number">
+          Realizado
+        </th>
+        <th class="number">
+          Saldo
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for projeto in projetos %}
+        <tr class="project-row" data-project-row>
+          <td>
+            <a href="{% url 'projetos:detalhe' projeto.pk %}" class="table-title">{{ projeto.nome }}</a>
+            <small class="d-block muted">{{ projeto.cliente_contratante|default:'Cliente não informado' }}</small>
+          </td>
+          <td>
+            <span class="badge status-{{ projeto.status|lower }}">{{ projeto.get_status_display }}</span>
+          </td>
+          <td class="number">
+            R$ {{ projeto.totais.orcado|numero_br }}
+          </td>
+          <td class="number">
+            R$ {{ projeto.totais.realizado|numero_br }}
+          </td>
+          <td class="number">
+            R$ {{ projeto.totais.saldo|numero_br }}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              {% if inicio %}
+                <span aria-hidden="true">▦</span>
+                <h3>
+                  A primeira obra começa aqui
+                </h3>
+                <p>
+                  Cadastre um projeto para organizar suas etapas, orçamentos e despesas.
+                </p>
+                <a href="{% url 'projetos:novo' %}" class="btn btn-primary">Criar projeto</a>
+              {% else %}
+                <h3>
+                  Nenhum projeto encontrado
+                </h3>
+                <p>
+                  Experimente ajustar a busca ou cadastre uma nova obra.
+                </p>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

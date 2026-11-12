@@ -1,8 +1,117 @@
 {% extends "base.html" %}
-{% block title %}Conferir lote · {{ projeto.nome }}{% endblock %}
-{% block content %}{% include "envios/_projeto_nav.html" with area="envios" %}
-<section class="card"><div class="card-body"><h2>Confira o lote</h2><p class="muted">Após a confirmação, a taxa e os dados históricos deste lote serão preservados.</p>
-<div class="table-wrap"><table class="table"><thead><tr><th>Fornecedor</th><th>Etapa</th><th>Item</th><th>NF</th><th>Valor</th></tr></thead><tbody>{% for despesa in despesas %}<tr><td>{{ despesa.fornecedor }}</td><td>{{ despesa.etapa.titulo }}</td><td>{{ despesa.orcamento.descricao|default:"Área geral" }}</td><td>{{ despesa.numero_nf|default:"—" }}</td><td>R$ {{ despesa.valor|floatformat:2 }}</td></tr>{% endfor %}</tbody></table></div>
-<dl><dt>Despesas selecionadas</dt><dd>R$ {{ resumo.valor_despesas|floatformat:2 }}</dd><dt>Percentual do projeto</dt><dd>{{ resumo.percentual_taxa|floatformat:2 }}%</dd><dt>Taxa</dt><dd>R$ {{ resumo.valor_taxa|floatformat:2 }}</dd>{% if resumo.justificativa_taxa %}<dt>Justificativa do ajuste</dt><dd>{{ resumo.justificativa_taxa }}</dd>{% endif %}<dt>Total com taxa</dt><dd><strong>R$ {{ resumo.valor_total|floatformat:2 }}</strong></dd></dl>
-{% if destinatarios %}<p>Gerar e enviar por e-mail, em CCO, para: {{ destinatarios|join:", " }}.</p>{% else %}<p>Gerar relatório para consulta e download.</p>{% endif %}
-<div class="toolbar"><a class="btn btn-outline" href="{% url 'envios:painel' projeto.pk %}">Voltar</a><form method="post" action="{% url 'envios:confirmar' projeto.pk %}">{% csrf_token %}<input type="hidden" name="token" value="{{ token }}"><button type="submit" class="btn btn-primary">Confirmar lote</button></form></div></div></section>{% endblock %}
+
+{% load huminize_extras %}
+
+{% block title %}
+  Conferir lote · {{ projeto.nome }}
+{% endblock %}
+{% block content %}
+  {% include "envios/_projeto_nav.html" with area="envios" %}
+  <section class="card">
+    <div class="card-body">
+      <h2>
+        Confira o lote
+      </h2>
+      <p class="muted">
+        Após a confirmação, a taxa e os dados históricos deste lote serão preservados.
+      </p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                Fornecedor
+              </th>
+              <th>
+                Etapa
+              </th>
+              <th>
+                Item
+              </th>
+              <th>
+                NF
+              </th>
+              <th>
+                Valor
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for despesa in despesas %}
+              <tr>
+                <td>
+                  {{ despesa.fornecedor }}
+                </td>
+                <td>
+                  {{ despesa.etapa.titulo }}
+                </td>
+                <td>
+                  {{ despesa.orcamento.descricao|default:"Área geral" }}
+                </td>
+                <td>
+                  {{ despesa.numero_nf|default:"—" }}
+                </td>
+                <td>
+                  R$ {{ despesa.valor|numero_br }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <dl>
+        <dt>
+          Despesas selecionadas
+        </dt>
+        <dd>
+          R$ {{ resumo.valor_despesas|numero_br }}
+        </dd>
+        <dt>
+          Percentual do projeto
+        </dt>
+        <dd>
+          {{ resumo.percentual_taxa|floatformat:2 }}%
+        </dd>
+        <dt>
+          Taxa
+        </dt>
+        <dd>
+          R$ {{ resumo.valor_taxa|numero_br }}
+        </dd>
+        {% if resumo.justificativa_taxa %}
+          <dt>
+            Justificativa do ajuste
+          </dt>
+          <dd>
+            {{ resumo.justificativa_taxa }}
+          </dd>
+        {% endif %}
+        <dt>
+          Total com taxa
+        </dt>
+        <dd>
+          <strong>R$ {{ resumo.valor_total|numero_br }}</strong>
+        </dd>
+      </dl>
+      {% if destinatarios %}
+        <p>
+          Gerar e enviar por e-mail, em CCO, para: {{ destinatarios|join:", " }}.
+        </p>
+      {% else %}
+        <p>
+          Gerar relatório para consulta e download.
+        </p>
+      {% endif %}
+      <div class="toolbar">
+        <a class="btn btn-outline" href="{% url 'envios:painel' projeto.pk %}">Voltar</a>
+        <form method="post" action="{% url 'envios:confirmar' projeto.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="token" value="{{ token }}">
+          <button type="submit" class="btn btn-primary">
+            Confirmar lote
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -86,7 +86,7 @@ class FinanceiroTests(TestCase):
         self.etapa.save()
         resposta = self.client.get(url)
         self.assertEqual(resposta.status_code, 200)
-        self.assertContains(resposta, 'id="show-inactive" checked')
+        self.assertContains(resposta, '<input type="checkbox" id="show-inactive" checked>', html=True)
         self.assertFalse(resposta.context["dados"]["etapas"][0]["ativo"])
 
     def test_edicao_preserva_status_e_formulario_com_rotulos_novos(self):
@@ -101,8 +101,8 @@ class FinanceiroTests(TestCase):
         self.assertEqual(projeto.status, Projeto.Status.CONCLUIDO)
         self.client.force_login(self.usuario)
         resposta = self.client.get(reverse("projetos:editar", args=[projeto.pk]))
-        self.assertContains(resposta, ">Cliente</label>")
-        self.assertContains(resposta, ">Observação</label>")
+        self.assertContains(resposta, '<label for="id_cliente_contratante">Cliente</label>', html=True)
+        self.assertContains(resposta, '<label for="id_descricao">Observação</label>', html=True)
         self.assertNotContains(resposta, 'name="status"')
         self.assertNotContains(resposta, 'name="data_conclusao"')
 

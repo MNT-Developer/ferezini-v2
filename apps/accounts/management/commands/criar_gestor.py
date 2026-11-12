@@ -10,7 +10,7 @@ from apps.auditoria.utils import registrar
 
 
 class Command(BaseCommand):
-    help = "Cria o primeiro gestor com as cinco permissões de negócio, sem privilégios técnicos Django."
+    help = "Cria o primeiro gestor com todas as permissões de negócio, sem privilégios técnicos Django."
 
     def add_arguments(self, parser):
         parser.add_argument("--username", required=True)
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         if senha != getpass("Confirme a senha: "):
             raise CommandError("As senhas não conferem.")
         usuario = Usuario(username=options["username"], email=options["email"],
-                          permissao_diretoria=True, permissao_gestao_funcionario=True,
+                          permissao_diretoria=True, permissao_administrativo=True, permissao_gestao_funcionario=True,
                           permissao_acesso_geral=True, permissao_gestao_projetos=True,
                           permissao_relatorios_gerais=True)
         try:
@@ -34,5 +34,5 @@ class Command(BaseCommand):
         except ValidationError as erro:
             raise CommandError(" ".join(erro.messages)) from erro
         usuario.save()
-        registrar(usuario, usuario, "CRIACAO_GESTOR", novos={"username": usuario.username, "permissoes_iniciais": "Todas as cinco"})
+        registrar(usuario, usuario, "CRIACAO_GESTOR", novos={"username": usuario.username, "permissoes_iniciais": "Todas as seis"})
         self.stdout.write(self.style.SUCCESS("Gestor inicial criado. Altere as permissões de cada funcionário pela interface."))

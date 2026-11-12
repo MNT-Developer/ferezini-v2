@@ -1,8 +1,12 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django import forms
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db.models import Q
+
+from apps.accounts.permissions import pode_alterar_responsavel
 
 from .models import Projeto
 
@@ -40,10 +44,17 @@ class ProjetoForm(forms.ModelForm):
             "descricao": forms.Textarea(attrs={"rows": 3}), "endereco_obra": forms.Textarea(attrs={"rows": 3}),
             "data_inicio": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
             "previsao_termino": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "responsavel_tecnico": forms.HiddenInput,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, usuario=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.usuario = usuario
+        self.responsavel_inicial = self.instance.responsavel_tecnico if self.instance.responsavel_tecnico_id else None
+        self.pode_editar_responsavel = usuario is not None and pode_alterar_responsavel(usuario, self.instance)
+        self.fields["responsavel_tecnico"].queryset = get_user_model().objects.filter(
+            Q(is_active=True, is_superuser=False) | Q(pk=self.instance.responsavel_tecnico_id)
+        )
         self.order_fields([
             "nome", "cliente_contratante", "cpf_cnpj", "endereco_obra", "emails",
             "taxa_servico", "data_inicio", "previsao_termino",
@@ -55,6 +66,25 @@ class ProjetoForm(forms.ModelForm):
         if self.instance.pk and not self.is_bound:
             self.initial["emails"] = "\n".join(self.instance.emails.filter(ativo=True).values_list("email", flat=True))
             self.initial["versao"] = self.instance.versao
+
+    @property
+    def responsavel_selecionado(self):
+        return getattr(self, "cleaned_data", {}).get("responsavel_tecnico", self.responsavel_inicial)
+
+    @property
+    def nome_responsavel_selecionado(self):
+        responsavel = self.responsavel_selecionado
+        return (responsavel.first_name or responsavel.username) if responsavel else ""
+
+    def clean_responsavel_tecnico(self):
+        responsavel = self.cleaned_data["responsavel_tecnico"]
+        anterior_id = getattr(self.responsavel_inicial, "pk", None)
+        if getattr(responsavel, "pk", None) != anterior_id:
+            if self.usuario is not None and not self.pode_editar_responsavel:
+                raise ValidationError("Somente Diretoria ou Administrativo podem alterar o responsável técnico já vinculado.")
+            if responsavel is not None and (not responsavel.is_active or responsavel.is_superuser):
+                raise ValidationError("Selecione um colaborador ativo que não seja superusuário.")
+        return responsavel
 
     def clean_emails(self):
         emails = []

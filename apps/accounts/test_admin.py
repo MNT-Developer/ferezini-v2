@@ -13,19 +13,21 @@ class AdminTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'name="permissao_gestao_funcionario"')
         self.assertContains(response, 'name="permissao_diretoria"')
+        self.assertContains(response, 'name="permissao_administrativo"')
         self.assertContains(response, 'name="cargo"')
         response = self.client.post(url, {
             "username": "novo", "password1": "SenhaForte!947321",
             "password2": "SenhaForte!947321", "usable_password": "true",
             "first_name": "Maria", "email": "maria@example.com",
             "telefone": "11999999999", "cargo": "Engenheira",
-            "is_active": "on", "permissao_gestao_projetos": "on",
+            "is_active": "on", "permissao_gestao_projetos": "on", "permissao_administrativo": "on",
             "permissao_relatorios_gerais": "on", "_save": "Salvar",
         })
         self.assertEqual(response.status_code, 302, response.context["adminform"].form.errors if response.status_code == 200 else "")
         usuario = get_user_model().objects.get(username="novo")
         self.assertEqual(usuario.cargo, "Engenheira")
         self.assertTrue(usuario.permissao_gestao_projetos)
+        self.assertTrue(usuario.permissao_administrativo)
         self.assertTrue(usuario.permissao_relatorios_gerais)
         self.assertFalse(usuario.permissao_diretoria)
         self.assertFalse(usuario.is_staff)

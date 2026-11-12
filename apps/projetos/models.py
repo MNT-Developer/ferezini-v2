@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -19,7 +20,11 @@ class Projeto(RegistroNegocio):
     cliente_contratante = models.CharField(max_length=200, blank=True)
     cpf_cnpj = models.CharField(max_length=18, blank=True)
     endereco_obra = models.TextField(blank=True)
-    responsavel_tecnico = models.CharField(max_length=200, blank=True)
+    responsavel_tecnico = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="projetos_responsavel", verbose_name="Responsável técnico",
+    )
+    responsavel_tecnico_anterior = models.CharField(max_length=200, blank=True, editable=False)
     data_inicio = models.DateField(null=True, blank=True)
     previsao_termino = models.DateField(null=True, blank=True)
     data_conclusao = models.DateField(null=True, blank=True)
@@ -42,6 +47,12 @@ class Projeto(RegistroNegocio):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def nome_responsavel_tecnico(self):
+        if self.responsavel_tecnico_id:
+            return self.responsavel_tecnico.get_full_name() or self.responsavel_tecnico.username
+        return self.responsavel_tecnico_anterior
 
 
 class ProjetoEmail(RegistroNegocio):
