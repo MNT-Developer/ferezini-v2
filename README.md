@@ -21,6 +21,8 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
 
+A conexão é configurada por `DATABASE_URL=mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO`, usando `dj-database-url`. Caracteres especiais das credenciais precisam ser codificados na URL, conforme a [documentação da biblioteca](https://pypi.org/project/dj-database-url/3.1.2/). A configuração mantém conexões por até 600 segundos, com verificação de saúde e `ssl_require=False`. As variáveis separadas `DB_*` foram substituídas pela URL.
+
 A versão [v.0.0.5](.codex/versao/v.0.0.5.md) foi finalizada em 12/11/2026, com o tamanho da obra, os dados descritivos consultados na raiz do projeto e a padronização dos PDFs. A versão ativa é a [v.0.0.6](.codex/versao/v.0.0.6.md); as próximas alterações serão registradas nela até o encerramento explícito pelo usuário.
 
 Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
@@ -54,7 +56,7 @@ No Windows, use o mesmo manifesto e configuração:
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --no-cache-dir -r requirements.txt
 # Se ainda nao existir .env, copie .codex/.env.example para a raiz.
-# No .env local: DJANGO_DEBUG=true, hosts locais, banco e backend de e-mail console.
+# No .env local: DJANGO_DEBUG=true, hosts locais, DATABASE_URL e backend de e-mail console.
 .\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py runserver
 ```

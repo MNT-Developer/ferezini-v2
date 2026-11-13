@@ -23,18 +23,26 @@
     {% endif %}
   </div>
   {% if perms_app.projetos %}
-    <div class="stat-grid">
-      <div class="stat-card">
-        <span>Projetos</span><strong>{{ indicadores.total_projetos|default:0 }}</strong><small>{{ indicadores.em_andamento|default:0 }} em andamento</small>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
+      <div class="col">
+        <div class="stat-card h-100">
+          <span>Total de Projetos Cadastrados</span><strong>{{ indicadores.total_projetos }}</strong><small>Inclui projetos inativos</small>
+        </div>
       </div>
-      <div class="stat-card">
-        <span>Total orçado</span><strong>R$ {{ indicadores.orcado|default:0|numero_br }}</strong><small>Inclui taxas de serviço</small>
+      <div class="col">
+        <div class="stat-card h-100">
+          <span>Projetos em Andamento</span><strong>{{ indicadores.em_andamento }}</strong><small>Projetos ativos em execução</small>
+        </div>
       </div>
-      <div class="stat-card">
-        <span>Total realizado</span><strong>R$ {{ indicadores.realizado|default:0|numero_br }}</strong><small>Despesas ativas e taxas</small>
+      <div class="col">
+        <div class="stat-card h-100">
+          <span>Quantidade de Despesas Ag. Envio</span><strong>{{ indicadores.quantidade_aguardando_envio }}</strong><small>Quantidade de notas pendentes</small>
+        </div>
       </div>
-      <div class="stat-card">
-        <span>Saldo disponível</span><strong>R$ {{ indicadores.saldo|default:0|numero_br }}</strong><small>Orçado menos realizado</small>
+      <div class="col">
+        <div class="stat-card h-100">
+          <span>Valor de Despesas Ag. Envio</span><strong>R$ {{ indicadores.aguardando_envio|numero_br }}</strong><small>Valor das notas pendentes, sem taxas</small>
+        </div>
       </div>
     </div>
     <section class="card">

@@ -11,7 +11,7 @@
     ".venv": true,
     "migrate": true,
     "media": true,
-    "requirements.txt": true,
+    // "requirements.txt": true,
     "passenger_wsgi.py": true,
     ".runserver": true,
     ".ssh.txt": true,
