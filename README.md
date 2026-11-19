@@ -16,18 +16,18 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
     tests/                  # testes JavaScript
     test_settings.py        # isolamento dos testes automatizados
     tests_deploy.py
-    versao/v.0.0.6.md         # versão atual em desenvolvimento
+    versao/v.0.0.7.md         # versão atual em desenvolvimento
 ```
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
 
 A conexão é configurada por `DATABASE_URL=mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO`, usando `dj-database-url`. Caracteres especiais das credenciais precisam ser codificados na URL, conforme a [documentação da biblioteca](https://pypi.org/project/dj-database-url/3.1.2/). A configuração mantém conexões por até 600 segundos, com verificação de saúde e `ssl_require=False`. As variáveis separadas `DB_*` foram substituídas pela URL.
 
-A versão [v.0.0.5](.codex/versao/v.0.0.5.md) foi finalizada em 12/11/2026, com o tamanho da obra, os dados descritivos consultados na raiz do projeto e a padronização dos PDFs. A versão ativa é a [v.0.0.6](.codex/versao/v.0.0.6.md); as próximas alterações serão registradas nela até o encerramento explícito pelo usuário.
+A versão [v.0.0.6](.codex/versao/v.0.0.6.md) foi finalizada em 13/11/2026, com os quatro cards da página inicial e a conexão por `DATABASE_URL`. A versão ativa é a [v.0.0.7](.codex/versao/v.0.0.7.md); as próximas alterações serão registradas nela até o encerramento explícito pelo usuário.
 
 Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
 
-Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, Pango/WeasyPrint, mysqlclient e Cron**. Suporte genérico a Python não garante essas bibliotecas nativas.
+Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, mysqlclient e Cron**. Os PDFs usam ReportLab e fontes incluídas no pacote pip.
 
 ## Implantação no cPanel
 
@@ -63,6 +63,8 @@ python -m venv .venv
 
 Login: `/entrar/`. Admin: `/admin/`. `criar_gestor` cria as permissões operacionais; `createsuperuser` concede privilégios técnicos independentes das seis flags do sistema.
 
+Login e novas senhas não diferenciam maiúsculas de minúsculas. A única regra de força é o mínimo de seis caracteres. A migração `accounts.0004` exige que as contas com senhas antigas as redefinam antes de continuar: a senha atual permite entrar na tela de redefinição. A alteração também pode ser feita por um gestor autorizado ou pelo comando `changepassword`. As senhas continuam armazenadas como hashes PBKDF2 com salt.
+
 O responsável técnico é um colaborador opcional. Quem acessa projetos pode fazer o primeiro vínculo; depois, somente Diretoria ou Administrativo podem substituí-lo ou removê-lo. A seleção mostra colaboradores ativos que não sejam superusuários. Textos anteriores à conversão para usuário ficam preservados no cadastro, sem associação automática.
 
 O módulo **Gestão de Usuários** permite cadastrar, editar, inativar e reativar usuários, com busca, filtro de situação e paginação de 25 registros. O acesso exige Diretoria, Gestão de funcionários ou superusuário. As contas de superusuários ficam fora da listagem operacional. A inativação preserva vínculos e histórico e impede o acesso enquanto a conta estiver inativa.
@@ -91,6 +93,6 @@ No Linux, use o executável do virtualenv correspondente. O formatador atua some
 node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex/tests/responsavel-tecnico.test.cjs
 ```
 
-No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF exige WeasyPrint/Pango.
+No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF usa ReportLab, instalado pelo manifesto pip, com as fontes fornecidas pelo próprio pacote. O layout dos PDFs é definido em `utils/pdf.py`; os antigos templates de impressão HTML permanecem como referência histórica de apresentação.
 
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.6](.codex/versao/v.0.0.6.md), [versão finalizada v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
+Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).

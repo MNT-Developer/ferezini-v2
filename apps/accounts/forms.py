@@ -13,7 +13,7 @@ class LoginForm(AuthenticationForm):
 
 class FuncionarioForm(forms.ModelForm):
     senha = forms.CharField(label="Nova senha", required=False, strip=False, widget=forms.PasswordInput,
-                            help_text="Obrigatória no cadastro. Deixe em branco para manter a senha na edição.")
+                            help_text="Mínimo de 6 caracteres. Obrigatória no cadastro. Deixe em branco para manter a senha na edição.")
     versao = forms.IntegerField(required=False, widget=forms.HiddenInput)
 
     class Meta:

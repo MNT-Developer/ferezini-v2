@@ -1,4 +1,3 @@
-import os
 import re
 import smtplib
 import uuid
@@ -6,8 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
 from threading import Barrier
-from types import SimpleNamespace
-from unittest import skipUnless
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -201,17 +198,16 @@ class LotesTestes(EnviosFixture, TestCase):
 
     def test_pdf_em_memoria_reconstruido_com_taxa(self):
         lote = self.lote()
-        html = MagicMock()
-        html.return_value.write_pdf.return_value = b"%PDF-1.7-simulado"
-        with patch.dict("sys.modules", {"weasyprint": SimpleNamespace(HTML=html)}):
+        with patch("apps.envios.utils.gerar_relatorio_pdf", return_value=b"%PDF-1.7-simulado") as gerador:
             conteudo = gerar_pdf_lote(lote)
         self.assertTrue(conteudo.startswith(b"%PDF"))
-        html.return_value.write_pdf.assert_called_once_with()
-        relatorio = html.call_args.kwargs["string"]
-        self.assertInHTML("<td>Taxa de Serviço</td>", relatorio, count=1)
-        self.assertNotIn("lote-totais", relatorio)
-        self.assertInHTML("<td><strong>Valor:</strong> R$ 110,61</td>", relatorio)
-        self.assertIn("Fornecedor", relatorio)
+        gerador.assert_called_once()
+        projeto, itens, total, taxa = gerador.call_args.args
+        self.assertEqual(projeto.pk, self.projeto.pk)
+        self.assertEqual(len(itens), 1)
+        self.assertEqual(total, Decimal("110.61"))
+        self.assertEqual(taxa, Decimal("10.51"))
+        self.assertEqual(gerador.call_args.kwargs["confirmacao"], lote.data_envio)
 
     def test_relatorio_taxa_e_ultima_linha_com_apenas_fornecedor_e_valor(self):
         despesas = [self.despesa("100"), self.despesa("200", fornecedor="Segundo fornecedor")]
@@ -249,16 +245,18 @@ class LotesTestes(EnviosFixture, TestCase):
         self.projeto.tamanho = Decimal("900")
         self.projeto.taxa_servico = Decimal("90")
         self.projeto.save()
-        html = MagicMock()
-        html.return_value.write_pdf.return_value = b"%PDF-simulado"
-        with patch.dict("sys.modules", {"weasyprint": SimpleNamespace(HTML=html)}):
+        with patch("apps.envios.utils.gerar_relatorio_pdf", return_value=b"%PDF-simulado") as gerador:
             gerar_pdf_lote(lote)
-        relatorio = html.call_args.kwargs["string"]
+        projeto_pdf, itens_pdf, total_pdf, taxa_pdf = gerador.call_args.args
+        self.assertEqual(projeto_pdf.nome, "Nome atualizado")
+        self.assertEqual(projeto_pdf.cliente_contratante, "Cliente alterado")
+        self.assertEqual(projeto_pdf.endereco_obra, "Rua Alterada, 200")
+        self.assertEqual(projeto_pdf.tamanho, Decimal("900"))
         self.client.force_login(self.usuario)
         resposta = self.client.get(reverse("envios:detalhe", args=[lote.pk]))
         self.assertEqual(resposta.status_code, 200)
         resumo_pagina = re.search(r'<section class="envio-resumo".*?</section>', resposta.content.decode(), re.S).group(0)
-        for conteudo in (relatorio, resumo_pagina):
+        for conteudo in (resumo_pagina,):
             self.assertIn("Nome atualizado", conteudo)
             self.assertIn("Cliente alterado", conteudo)
             self.assertIn("Rua Alterada, 200", conteudo)
@@ -266,8 +264,8 @@ class LotesTestes(EnviosFixture, TestCase):
             self.assertNotIn("Nome original", conteudo)
             self.assertNotIn("Cliente original", conteudo)
             self.assertNotIn("Rua Original, 100", conteudo)
-        self.assertInHTML("<td><strong>Valor:</strong> R$ 110,61</td>", relatorio)
-        self.assertInHTML("<td>R$ 10,51</td>", relatorio)
+        self.assertEqual(total_pdf, Decimal("110.61"))
+        self.assertEqual(taxa_pdf, Decimal("10.51"))
 
     def test_novos_lotes_e_itens_nao_copiam_dados_descritivos_do_projeto(self):
         self.projeto.cliente_contratante = "Cliente que deve ficar na raiz"
@@ -292,7 +290,6 @@ class LotesTestes(EnviosFixture, TestCase):
             resposta = self.client.get(reverse("envios:pdf", args=[lote.pk]))
         self.assertContains(resposta, "mecanismo PDF está indisponível", status_code=503)
 
-    @skipUnless(os.getenv("TEST_PDF_REAL") == "true", "PDF real exige WeasyPrint/Pango e TEST_PDF_REAL=true.")
     def test_pdf_real_em_memoria(self):
         self.assertTrue(gerar_pdf_lote(self.lote()).startswith(b"%PDF-"))
 

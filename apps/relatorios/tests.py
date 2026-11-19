@@ -1,11 +1,7 @@
-import os
-import re
 from datetime import date, datetime
 from decimal import Decimal
-from types import SimpleNamespace
 from zoneinfo import ZoneInfo
-from unittest import skipUnless
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -21,7 +17,6 @@ from .utils import despesas_por_periodo, gerar_pdf_periodo
 
 
 class RelatorioPeriodoTestes(TestCase):
-    @skipUnless(os.getenv("TEST_PDF_REAL") == "true", "PDF real exige WeasyPrint/Pango e TEST_PDF_REAL=true.")
     def test_pdf_real_periodo_em_memoria_e_autorizado(self):
         self.adicionar_lote(datetime(2026, 11, 1, 12, tzinfo=ZoneInfo("America/Sao_Paulo")))
         self.client.force_login(self.usuario)
@@ -95,21 +90,14 @@ class RelatorioPeriodoTestes(TestCase):
         atual.tamanho = Decimal("175.26")
         atual.taxa_servico = Decimal("99")
         atual.save()
-        html = MagicMock()
-        html.return_value.write_pdf.return_value = b"%PDF-simulado"
-        with patch.dict("sys.modules", {"weasyprint": SimpleNamespace(HTML=html)}):
+        with patch("apps.relatorios.utils.gerar_relatorio_pdf", return_value=b"%PDF-simulado") as gerador:
             self.assertTrue(gerar_pdf_periodo(contexto).startswith(b"%PDF"))
-        relatorio = html.call_args.kwargs["string"]
-        for texto in ("Obra atualizada", "Cliente atual", "Rua Atual, 100", "175,26"):
-            self.assertIn(texto, relatorio)
-        self.assertInHTML("<td><strong>Valor:</strong> R$ 330,00</td>", relatorio)
-        corpo = re.search(r'<table class="table periodo-itens">.*?<tbody>(.*?)</tbody>', relatorio, re.S).group(1)
-        linhas = re.findall(r"<tr\b[^>]*>(.*?)</tr>", corpo, re.S)
-        self.assertEqual(len(linhas), 3)
-        celulas = [re.sub(r"\s+", " ", valor).strip() for valor in re.findall(r"<td>(.*?)</td>", linhas[-1], re.S)]
-        self.assertEqual(celulas, ["", "", "", "Taxa de Serviço", "", "", "R$ 30,00"])
-        self.assertEqual(relatorio.count("Taxa de Serviço"), 1)
-        self.assertNotIn("Subtotal de despesas", relatorio)
-        self.assertNotIn("Total com taxas", relatorio)
-        self.assertNotIn("Valores históricos dos snapshots", relatorio)
-        html.return_value.write_pdf.assert_called_once_with()
+        projeto_pdf, itens, total, taxa = gerador.call_args.args
+        self.assertEqual(projeto_pdf.nome, "Obra atualizada")
+        self.assertEqual(projeto_pdf.cliente_contratante, "Cliente atual")
+        self.assertEqual(projeto_pdf.endereco_obra, "Rua Atual, 100")
+        self.assertEqual(projeto_pdf.tamanho, Decimal("175.26"))
+        self.assertEqual(len(itens), 2)
+        self.assertEqual(total, Decimal("330.00"))
+        self.assertEqual(taxa, Decimal("30.00"))
+        self.assertEqual(gerador.call_args.kwargs, {"inicio": date(2026, 11, 1), "fim": date(2026, 11, 30)})

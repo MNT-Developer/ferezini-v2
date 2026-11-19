@@ -3,6 +3,7 @@ from . import views
 
 app_name = "accounts"
 urlpatterns = [
+    path("redefinir-senha/", views.redefinir_senha_obrigatoria, name="redefinir_senha"),
     path("", views.lista, name="lista"),
     path("novo/", views.criar, name="criar"),
     path("<int:pk>/", views.editar, name="editar"),

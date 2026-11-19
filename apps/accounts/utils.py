@@ -7,6 +7,17 @@ from .models import Usuario
 from .permissions import exigir_concessao_diretoria, exigir_gestao_do_usuario, exigir_permissao
 
 
+@transaction.atomic
+def redefinir_senha(usuario, senha):
+    atual = Usuario.objects.select_for_update().get(pk=usuario.pk)
+    password_validation.validate_password(senha, atual)
+    atual.set_password(senha)
+    atual.versao += 1
+    atual.save(update_fields=["password", "exigir_redefinicao_senha", "versao"])
+    registrar(atual, atual, "REDEFINICAO_SENHA", novos={"senha": "Alterada (conteúdo não registrado)", "versao": atual.versao})
+    return atual
+
+
 def bloquear_usuarios_gestao(operador, usuario_id=None):
     # A ordem fixa evita bloqueios cruzados; o operador também é relido para validar seus privilégios atuais.
     registros = {

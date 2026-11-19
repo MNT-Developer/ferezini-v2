@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Redefinir senha
+{% endblock %}
+{% block content %}
+  <section class="card card-body">
+    <h1>
+      Redefina sua senha
+    </h1>
+    <p>
+      Para continuar, escolha uma senha com pelo menos 6 caracteres. A nova senha não diferencia maiúsculas de minúsculas.
+    </p>
+    <form method="post" class="stack-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">
+        Salvar nova senha
+      </button>
+    </form>
+  </section>
+{% endblock %}

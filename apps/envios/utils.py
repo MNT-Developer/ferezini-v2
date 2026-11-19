@@ -10,8 +10,8 @@ from django.core.mail import EmailMessage, get_connection
 from django.core.mail.backends.smtp import EmailBackend as SMTPBackend
 from django.core.validators import validate_email
 from django.db import transaction
-from django.template.loader import render_to_string
 from django.utils import timezone
+from utils.pdf import gerar_relatorio_pdf
 
 from apps.accounts.permissions import exigir_permissao
 from apps.auditoria.utils import registrar
@@ -205,12 +205,9 @@ def solicitar_reenvio(usuario, lote_id, destinatarios):
 
 
 def gerar_pdf_lote(lote):
-    from weasyprint import HTML
-
     # Consulte a raiz mesmo que o objeto recebido tenha uma FK em cache.
     projeto = Projeto.objects.get(pk=lote.projeto_id)
-    html = render_to_string("envios/lote_impressao.html", {"lote": lote, "projeto": projeto})
-    return HTML(string=html).write_pdf()
+    return gerar_relatorio_pdf(projeto, lote.itens.all(), lote.valor_total, lote.valor_taxa, confirmacao=lote.data_envio)
 
 
 @transaction.atomic

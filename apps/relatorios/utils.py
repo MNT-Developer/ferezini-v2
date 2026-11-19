@@ -4,10 +4,10 @@ from zoneinfo import ZoneInfo
 
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
-from django.template.loader import render_to_string
 
 from apps.envios.models import LoteEnvioDespesa, LoteEnvioItem
 from apps.projetos.models import Projeto
+from utils.pdf import gerar_relatorio_pdf
 
 
 def despesas_por_periodo(projeto, inicio, fim):
@@ -30,7 +30,8 @@ def despesas_por_periodo(projeto, inicio, fim):
 
 
 def gerar_pdf_periodo(contexto):
-    from weasyprint import HTML
-
-    contexto_atual = {**contexto, "projeto": Projeto.objects.get(pk=contexto["projeto"].pk)}
-    return HTML(string=render_to_string("relatorios/periodo_impressao.html", contexto_atual)).write_pdf()
+    projeto = Projeto.objects.get(pk=contexto["projeto"].pk)
+    return gerar_relatorio_pdf(
+        projeto, contexto["itens"], contexto["valor_total"], contexto["valor_taxas"],
+        inicio=contexto["inicio"], fim=contexto["fim"],
+    )

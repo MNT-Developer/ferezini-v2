@@ -1,5 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -11,7 +12,21 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from .forms import EstadoUsuarioForm, FuncionarioForm, LoginForm
 from .models import Usuario
 from .permissions import filtrar_diretoria, permissao_necessaria
-from .utils import alterar_estado_usuario, salvar_funcionario
+from .utils import alterar_estado_usuario, salvar_funcionario, redefinir_senha
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def redefinir_senha_obrigatoria(request):
+    if not request.user.exigir_redefinicao_senha:
+        return redirect("inicio")
+    form = SetPasswordForm(request.user, request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        usuario = redefinir_senha(request.user, form.cleaned_data["new_password1"])
+        update_session_auth_hash(request, usuario)
+        messages.success(request, "Senha redefinida. Você já pode continuar usando o sistema.")
+        return redirect("inicio")
+    return render(request, "accounts/redefinir_senha.html", {"form": form})
 
 
 @require_http_methods(["GET", "POST"])

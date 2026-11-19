@@ -128,8 +128,8 @@ class FuncionariosTests(TestCase):
 
     def test_senha_validada_contra_dados_finais_do_funcionario(self):
         form = self.formulario(username="MariaRibeiro2026", senha="MariaRibeiro2026")
-        with self.assertRaises(ValidationError):
-            salvar_funcionario(self.operador, form)
+        usuario = salvar_funcionario(self.operador, form)
+        self.assertTrue(usuario.check_password("mariaribeiro2026"))
 
     def test_login_logout_csrf_e_redirect(self):
         self.operador.set_password("SenhaTeste!123")

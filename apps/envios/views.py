@@ -94,7 +94,7 @@ def pdf(request, lote_id):
     try:
         conteudo = gerar_pdf_lote(lote)
     except (ImportError, OSError):
-        return HttpResponse("O mecanismo PDF está indisponível. Verifique a instalação do WeasyPrint e suas bibliotecas nativas.", status=503, content_type="text/plain; charset=utf-8")
+        return HttpResponse("O mecanismo PDF está indisponível. Verifique a instalação do ReportLab pelo requirements.txt.", status=503, content_type="text/plain; charset=utf-8")
     response = HttpResponse(conteudo, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="despesas-lote-{lote.pk}.pdf"'
     response["Cache-Control"] = "private, no-store"
