@@ -19,7 +19,7 @@
   const expenseFields = [
     ["fornecedor", "Fornecedor", "text"], ["descricao", "Descrição", "text"],
     ["cpf_cnpj_fornecedor", "CPF / CNPJ", "text"], ["numero_nf", "NF", "text"],
-    ["data_nf", "Data NF", "date"], ["valor", "Valor", "number"],
+    ["data_nf", "Data NF", "date"], ["data_vencimento", "Vencimento", "date"], ["valor", "Valor", "number"],
     ["observacao", "Observação", "text"]
   ];
 
@@ -342,7 +342,7 @@
       const td = element("td"); td.append(actionsFor("despesa", expense, stage.ativo)); tr.append(td);
       body.append(tr);
     }
-    if (!expenses.length) { const tr = element("tr"); const td = element("td", "muted", "Nenhuma despesa neste agrupamento."); td.colSpan = 9; tr.append(td); body.append(tr); }
+    if (!expenses.length) { const tr = element("tr"); const td = element("td", "muted", "Nenhuma despesa neste agrupamento."); td.colSpan = expenseFields.length + 2; tr.append(td); body.append(tr); }
     table.append(body); wrap.append(table); return wrap;
   }
 
@@ -433,6 +433,9 @@
       const tr = element("tr", item.ativo ? "" : "row-inactive"); draggable(tr, "orcamento", item.id, stage.id);
       const drag = element("td", "drag-handle", "⠿"); drag.title = "Arraste para reorganizar item"; tr.append(drag);
       tr.append(editableCell(item, "orcamento", "descricao", "Descrição", "text", !stage.ativo), editableCell(item, "orcamento", "quantidade", "Quantidade", "number", !stage.ativo), editableCell(item, "orcamento", "unidade", "Unidade", "text", !stage.ativo), editableCell(item, "orcamento", "valor_unitario", "Valor unitário", "number", !stage.ativo));
+      if (item.valor_mao_obra != null || item.valor_material != null) {
+        tr.lastChild.append(element("small", "d-block muted", `Mão de obra: ${currency(item.valor_mao_obra ?? 0)} · Material: ${currency(item.valor_material ?? 0)}`));
+      }
       const total = element("td", "number"); total.append(subtotalNode("orcamento", item, "total")); tr.append(total, stateCell(item, "orcamento"));
       const actionCell = element("td"); actionCell.append(actionsFor("orcamento", item, stage.ativo)); tr.append(actionCell); body.append(tr);
     }
@@ -498,7 +501,7 @@
       for (const row of rows) {
         const obj = record("despesa", row.dataset.expenseId);
         row.hidden = [...filters].some(([field, value]) => {
-          const raw = field === "data_nf" && obj[field] ? obj[field].split("-").reverse().join("/") : field === "valor" ? `${obj[field] ?? ""} ${currency(obj[field])}` : obj[field];
+          const raw = ["data_nf", "data_vencimento"].includes(field) && obj[field] ? obj[field].split("-").reverse().join("/") : field === "valor" ? `${obj[field] ?? ""} ${currency(obj[field])}` : obj[field];
           return !normalized(raw).includes(normalized(value));
         });
         body.append(row);

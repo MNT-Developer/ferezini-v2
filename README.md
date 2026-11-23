@@ -16,16 +16,18 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
     tests/                  # testes JavaScript
     test_settings.py        # isolamento dos testes automatizados
     tests_deploy.py
-    versao/v.0.0.7.md         # versão atual em desenvolvimento
+    versao/v.0.0.8.md         # versão atual em desenvolvimento
 ```
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
 
 A conexão é configurada por `DATABASE_URL=mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO`, usando `dj-database-url`. Caracteres especiais das credenciais precisam ser codificados na URL, conforme a [documentação da biblioteca](https://pypi.org/project/dj-database-url/3.1.2/). A configuração mantém conexões por até 600 segundos, com verificação de saúde e `ssl_require=False`. As variáveis separadas `DB_*` foram substituídas pela URL.
 
-A versão [v.0.0.6](.codex/versao/v.0.0.6.md) foi finalizada em 13/11/2026, com os quatro cards da página inicial e a conexão por `DATABASE_URL`. A versão ativa é a [v.0.0.7](.codex/versao/v.0.0.7.md); as próximas alterações serão registradas nela até o encerramento explícito pelo usuário.
+A versão [v.0.0.7](.codex/versao/v.0.0.7.md) foi finalizada em **23/11/2026**, com autenticação sem distinção de caixa, PDFs via ReportLab e importação de projetos por Excel. A [v.0.0.6](.codex/versao/v.0.0.6.md) permanece como base dos quatro cards da página inicial e da conexão por `DATABASE_URL`. A versão ativa é a [v.0.0.8](.codex/versao/v.0.0.8.md), aberta em **23/11/2026**; as próximas atualizações serão consolidadas nela até seu encerramento por solicitação do usuário. A criação de outro documento de versão depende de solicitação explícita.
 
 Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
+
+O botão **Importar**, disponível em Início e Projetos, recebe `.xlsm`, `.xlsx` e `.xls` com as abas Painel, Serviços e Custos e Projeto. A importação cria uma nova obra com etapas, orçamentos e despesas; o responsável técnico é o usuário que enviou o arquivo. Os envios históricos são agrupados por data, sem taxa adicional, e ficam disponíveis no histórico de lotes para gerar PDF. Novos envios continuam usando a taxa normal do projeto. Macros não são executadas, o arquivo original é preservado e uma falha desfaz toda a importação. Reenviar o mesmo arquivo abre o projeto já importado. Consulte o [mapeamento e as validações na v.0.0.7](.codex/versao/v.0.0.7.md).
 
 Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, mysqlclient e Cron**. Os PDFs usam ReportLab e fontes incluídas no pacote pip.
 
@@ -85,6 +87,8 @@ Para formatar novamente ou conferir o padrão, instale a ferramenta de desenvolv
 
 No Linux, use o executável do virtualenv correspondente. O formatador atua somente em `templates/`; ele não é uma dependência de execução da aplicação.
 
+Para gerar os arquivos `.xls` dos testes de importação, instale também a ferramenta de desenvolvimento `xlwt==1.3.0` no virtualenv. A leitura de `.xls` em produção usa `xlrd`, já incluído no manifesto, e não depende de `xlwt`.
+
 ## Verificações
 
 ```powershell
@@ -95,4 +99,4 @@ node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex
 
 No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF usa ReportLab, instalado pelo manifesto pip, com as fontes fornecidas pelo próprio pacote. O layout dos PDFs é definido em `utils/pdf.py`; os antigos templates de impressão HTML permanecem como referência histórica de apresentação.
 
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
+Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.8](.codex/versao/v.0.0.8.md), [versão finalizada v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).

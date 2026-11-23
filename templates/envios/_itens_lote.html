@@ -66,24 +66,26 @@
           </td>
         </tr>
       {% endfor %}
-      <tr class="envio-taxa">
-        <td>
-        </td>
-        <td>
-        </td>
-        <td>
-          Taxa de Serviço
-        </td>
-        <td>
-        </td>
-        <td>
-        </td>
-        <td>
-        </td>
-        <td>
-          R$ {{ lote.valor_taxa|numero_br }}
-        </td>
-      </tr>
+      {% if not lote.importado %}
+        <tr class="envio-taxa">
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+            Taxa de Serviço
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+          <td>
+            R$ {{ lote.valor_taxa|numero_br }}
+          </td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 </div>

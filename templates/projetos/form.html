@@ -54,7 +54,7 @@
         {% if field.name == 'responsavel_tecnico' %}
           {% include "projetos/_responsavel_tecnico.html" %}
         {% elif not field.is_hidden %}
-          <div class="{% if field.name == 'nome' or field.name == 'descricao' %}
+          <div class="{% if field.name == 'nome' or field.name == 'descricao' or field.name == 'arquiteto' %}
                         col-12
                       {% elif field.name == 'taxa_servico' or field.name == 'data_inicio' or field.name == 'previsao_termino' or field.name == 'tamanho' %}
                         col-12 col-md-3

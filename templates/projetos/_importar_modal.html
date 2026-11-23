@@ -2,12 +2,13 @@
         class="app-dialog"
         aria-labelledby="import-project-title"
         aria-describedby="import-project-description">
-  <form method="dialog">
+  <form method="post" action="{% url 'projetos:importar' %}" enctype="multipart/form-data">
+    {% csrf_token %}
     <h2 id="import-project-title">
       Importar projeto
     </h2>
     <p class="muted" id="import-project-description">
-      Selecione a planilha de acompanhamento da obra. A importação de projetos por planilha estará disponível em breve.
+      Selecione a planilha com as abas Painel, Serviços e Custos e Projeto. Os envios históricos serão criados por data, sem taxa adicional.
     </p>
     <div class="field">
       <label for="import-project-file">
@@ -15,16 +16,18 @@
       </label>
       <input id="import-project-file"
              type="file"
+             name="arquivo"
+             required
              accept=".xlsx,.xls,.xlsm"
              aria-describedby="import-project-help"
              autofocus>
-      <small class="field-help" id="import-project-help">Formatos: .xlsm, .xlsx e .xls. O arquivo selecionado ainda não será enviado ou processado.</small>
+      <small class="field-help" id="import-project-help">Formatos: .xlsm, .xlsx e .xls. Até 20 MB. Macros não são executadas.</small>
     </div>
     <div class="form-actions">
-      <button class="btn btn-outline" type="submit">
+      <button class="btn btn-outline" type="button" data-close-import>
         Fechar
       </button>
-      <button class="btn btn-primary" type="button" disabled>
+      <button class="btn btn-primary" type="submit">
         Importar
       </button>
     </div>

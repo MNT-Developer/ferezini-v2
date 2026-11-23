@@ -12,7 +12,7 @@ from utils.formatacao import formatar_numero_br
 _fontes_lock = Lock()
 
 
-def gerar_relatorio_pdf(projeto, itens, valor_total, valor_taxa, *, confirmacao=None, inicio=None, fim=None):
+def gerar_relatorio_pdf(projeto, itens, valor_total, valor_taxa, *, confirmacao=None, inicio=None, fim=None, exibir_taxa=True):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_RIGHT
     from reportlab.lib.pagesizes import A4, landscape
@@ -78,7 +78,7 @@ def gerar_relatorio_pdf(projeto, itens, valor_total, valor_taxa, *, confirmacao=
         ["Data do lote", "Etapa", "Item", "Fornecedor", "NF", "Data NF", "Valor"] if periodo
         else ["Etapa", "Item", "Fornecedor", "CPF/CNPJ", "NF", "Data NF", "Valor"]
     )
-    proporcoes = [.14, .16, .18, .26, .09, .08, .09] if periodo else [.16, .18, .27, .14, .08, .08, .09]
+    proporcoes = [.14, .16, .18, .25, .09, .08, .10] if periodo else [.16, .18, .26, .14, .08, .08, .10]
     cabecalho_direita = ParagraphStyle("FRZ-cabecalho-direita", parent=cabecalho, alignment=TA_RIGHT)
     linhas = [[paragrafo(titulo, cabecalho_direita if indice == 6 else cabecalho) for indice, titulo in enumerate(titulos)]]
     for item in itens:
@@ -102,7 +102,8 @@ def gerar_relatorio_pdf(projeto, itens, valor_total, valor_taxa, *, confirmacao=
     taxa = [""] * 7
     taxa[3 if periodo else 2] = paragrafo("Taxa de Serviço", cabecalho)
     taxa[6] = paragrafo(moeda(valor_taxa), ParagraphStyle("FRZ-taxa", parent=direita, fontName="FRZ-Bold"))
-    linhas.append(taxa)
+    if exibir_taxa:
+        linhas.append(taxa)
     tabela = LongTable(linhas, colWidths=[largura * p for p in proporcoes], repeatRows=1, splitInRow=0)
     estilo = [
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2f3f4")),

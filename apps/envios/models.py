@@ -65,9 +65,10 @@ class LoteEnvioDespesa(RegistroHistorico):
         "projeto_id", "data_envio", "enviado_por_id", "modalidade",
         "valor_despesas", "percentual_taxa", "valor_taxa_calculado", "valor_taxa",
         "justificativa_taxa", "valor_total", "versao_layout", "destinatarios",
-        "chave_confirmacao",
+        "chave_confirmacao", "importado",
     )
     projeto = models.ForeignKey("projetos.Projeto", on_delete=models.PROTECT, related_name="lotes")
+    importado = models.BooleanField(default=False, editable=False)
     data_envio = models.DateTimeField(default=timezone.now, db_index=True)
     enviado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="lotes_confirmados")
     modalidade = models.CharField(max_length=20, choices=Modalidade.choices, default=Modalidade.GERAR)

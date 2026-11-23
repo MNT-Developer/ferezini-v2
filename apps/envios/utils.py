@@ -78,6 +78,7 @@ def snapshot_despesa(despesa):
         "cpf_cnpj_fornecedor": despesa.cpf_cnpj_fornecedor,
         "numero_nf": despesa.numero_nf,
         "data_nf": despesa.data_nf.isoformat() if despesa.data_nf else None,
+        "data_vencimento": despesa.data_vencimento.isoformat() if despesa.data_vencimento else None,
         "valor": str(despesa.valor),
         "observacao": despesa.observacao,
     }
@@ -207,7 +208,8 @@ def solicitar_reenvio(usuario, lote_id, destinatarios):
 def gerar_pdf_lote(lote):
     # Consulte a raiz mesmo que o objeto recebido tenha uma FK em cache.
     projeto = Projeto.objects.get(pk=lote.projeto_id)
-    return gerar_relatorio_pdf(projeto, lote.itens.all(), lote.valor_total, lote.valor_taxa, confirmacao=lote.data_envio)
+    opcoes = {"exibir_taxa": False} if lote.importado else {}
+    return gerar_relatorio_pdf(projeto, lote.itens.all(), lote.valor_total, lote.valor_taxa, confirmacao=lote.data_envio, **opcoes)
 
 
 @transaction.atomic

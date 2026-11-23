@@ -17,6 +17,7 @@ class Despesa(RegistroNegocio):
     cpf_cnpj_fornecedor = models.CharField(max_length=18, blank=True)
     numero_nf = models.CharField(max_length=100, blank=True)
     data_nf = models.DateField(null=True, blank=True)
+    data_vencimento = models.DateField("Vencimento", null=True, blank=True)
     valor = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     observacao = models.TextField(blank=True)
     rascunho = models.BooleanField(default=True, db_index=True)

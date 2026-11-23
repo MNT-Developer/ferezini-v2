@@ -3,7 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.core.validators import validate_email, FileExtensionValidator
 from django.db.models import Q
 
 from apps.accounts.permissions import pode_alterar_responsavel
@@ -29,7 +29,7 @@ class ProjetoForm(forms.ModelForm):
     class Meta:
         model = Projeto
         fields = [
-            "nome", "cliente_contratante", "cpf_cnpj", "endereco_obra",
+            "nome", "cliente_contratante", "cpf_cnpj", "tipo_obra", "rg_ie", "endereco_obra", "arquiteto",
             "taxa_servico", "data_inicio", "previsao_termino", "tamanho",
             "responsavel_tecnico", "descricao",
         ]
@@ -57,7 +57,7 @@ class ProjetoForm(forms.ModelForm):
             Q(is_active=True, is_superuser=False) | Q(pk=self.instance.responsavel_tecnico_id)
         )
         self.order_fields([
-            "nome", "cliente_contratante", "cpf_cnpj", "endereco_obra", "emails",
+            "nome", "cliente_contratante", "cpf_cnpj", "tipo_obra", "rg_ie", "endereco_obra", "emails", "arquiteto",
             "taxa_servico", "data_inicio", "previsao_termino", "tamanho",
             "responsavel_tecnico", "descricao", "versao",
         ])
@@ -101,3 +101,17 @@ class ProjetoForm(forms.ModelForm):
                 raise ValidationError("Há e-mails duplicados na lista de contatos.")
             emails.append(endereco)
         return emails
+
+
+class ImportarProjetoForm(forms.Form):
+    arquivo = forms.FileField(
+        label="Arquivo Excel", validators=[FileExtensionValidator(["xlsm", "xlsx", "xls"])],
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".xlsm,.xlsx,.xls"}),
+        help_text="Abas necessárias: Painel, Serviços e Custos e Projeto. Até 20 MB.",
+    )
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data["arquivo"]
+        if not arquivo.size or arquivo.size > 20 * 1024 * 1024:
+            raise ValidationError("Selecione um arquivo com dados de até 20 MB.")
+        return arquivo

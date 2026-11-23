@@ -22,8 +22,8 @@ from .models import Etapa, Projeto, ProjetoEmail
 MODELOS = {"etapa": Etapa, "orcamento": Orcamento, "despesa": Despesa}
 CAMPOS_EDITAVEIS = {
     "etapa": {"titulo", "descricao"},
-    "orcamento": {"descricao", "quantidade", "unidade", "valor_unitario"},
-    "despesa": {"descricao", "fornecedor", "cpf_cnpj_fornecedor", "numero_nf", "data_nf", "valor", "observacao", "orcamento"},
+    "orcamento": {"descricao", "quantidade", "unidade", "valor_unitario", "valor_mao_obra", "valor_material"},
+    "despesa": {"descricao", "fornecedor", "cpf_cnpj_fornecedor", "numero_nf", "data_nf", "data_vencimento", "valor", "observacao", "orcamento"},
 }
 
 
@@ -127,6 +127,8 @@ def estrutura_projeto(projeto, exibir_inativos=False):
         projeto = consultar_projetos().get(pk=projeto.pk)
     estrutura = {"projeto": serializar_registro(projeto), "totais": totais_projeto(projeto), "etapas": [], "taxas": []}
     for lote in projeto.lotes.all():
+        if lote.importado:
+            continue
         estrutura["taxas"].append({"id": lote.pk, "data_envio": lote.data_envio, "valor_taxa": lote.valor_taxa, "percentual_taxa": lote.percentual_taxa, "valor_total": lote.valor_total})
     for etapa in ordenar_registros(projeto.etapas.all(), "titulo"):
         if not etapa.ativo and not exibir_inativos:
@@ -276,6 +278,9 @@ def editar_celula(usuario, tipo, pk, campo, valor, versao, justificativa="", pro
     if exige_justificativa and not justificativa.strip():
         raise JustificativaObrigatoria("Informe uma justificativa para alterar este registro.")
     atribuir_valor(objeto, campo, valor)
+    if tipo == "orcamento" and campo == "valor_unitario":
+        objeto.valor_mao_obra = None
+        objeto.valor_material = None
     if tipo == "despesa" and campo == "orcamento" and objeto.orcamento_id and not objeto.orcamento.ativo:
         raise ValidationError("O item selecionado está inativo.")
     objeto.versao += 1

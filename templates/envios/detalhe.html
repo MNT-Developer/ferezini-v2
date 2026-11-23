@@ -17,6 +17,9 @@
         <div>
           <h2>
             Lote #{{ lote.pk }}
+            {% if lote.importado %}
+              <span class="badge">Importado da planilha</span>
+            {% endif %}
           </h2>
           <p class="muted">
             Confirmado em {{ lote.data_envio|date:"d/m/Y H:i" }} por {{ lote.enviado_por.get_full_name|default:lote.enviado_por.username }} · notas e valores históricos preservados

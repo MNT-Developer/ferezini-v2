@@ -176,6 +176,9 @@
               <tr>
                 <td>
                   #{{ lote.pk }} · {{ lote.data_envio|date:"d/m/Y H:i" }}
+                  {% if lote.importado %}
+                    <span class="badge">Importado</span>
+                  {% endif %}
                 </td>
                 <td>
                   R$ {{ lote.valor_despesas|numero_br }}

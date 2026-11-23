@@ -14,6 +14,8 @@ class Orcamento(RegistroNegocio):
     quantidade = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True, validators=[MinValueValidator(0)])
     unidade = models.CharField(max_length=30, blank=True)
     valor_unitario = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    valor_mao_obra = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    valor_material = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     rascunho = models.BooleanField(default=True, db_index=True)
     ordem = models.PositiveIntegerField(null=True, blank=True)
 
@@ -23,11 +25,17 @@ class Orcamento(RegistroNegocio):
         constraints = [
             models.CheckConstraint(condition=models.Q(quantidade__isnull=True) | models.Q(quantidade__gte=0), name="orcamento_quantidade_nao_negativa"),
             models.CheckConstraint(condition=models.Q(valor_unitario__isnull=True) | models.Q(valor_unitario__gte=0), name="orcamento_unitario_nao_negativo"),
+            models.CheckConstraint(condition=models.Q(valor_mao_obra__isnull=True) | models.Q(valor_mao_obra__gte=0), name="orcamento_mao_obra_nao_negativa"),
+            models.CheckConstraint(condition=models.Q(valor_material__isnull=True) | models.Q(valor_material__gte=0), name="orcamento_material_nao_negativo"),
         ]
 
     def clean(self):
         super().clean()
         self.descricao = (self.descricao or "").strip()
+        if self.valor_mao_obra is not None or self.valor_material is not None:
+            self.valor_unitario = self._meta.get_field("valor_unitario").clean(
+                (self.valor_mao_obra or Decimal("0")) + (self.valor_material or Decimal("0")), self,
+            )
         self.rascunho = not (
             self.descricao and self.quantidade is not None and self.valor_unitario is not None
         )

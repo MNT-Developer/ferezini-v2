@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Importar projeto
+{% endblock %}
+{% block content %}
+  <a href="{% url 'projetos:listar' %}" class="back-link">← Projetos</a>
+  <section class="card card-body">
+    <h1>
+      Importar projeto
+    </h1>
+    <p>
+      Selecione a planilha de acompanhamento com as abas Painel, Serviços e Custos e Projeto.
+    </p>
+    <form method="post" enctype="multipart/form-data" class="stack-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <p class="muted">
+        Os envios históricos serão agrupados por data, sem acrescentar taxa. O arquivo e as macros não serão executados.
+      </p>
+      <div class="form-actions">
+        <a href="{% url 'projetos:listar' %}" class="btn btn-outline">Cancelar</a>
+        <button class="btn btn-primary" type="submit">
+          Importar projeto
+        </button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

@@ -11,7 +11,8 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.accounts.permissions import exigir_permissao, pode_alterar_responsavel
 
-from .forms import ProjetoForm
+from .forms import ProjetoForm, ImportarProjetoForm
+from .importacao import importar_projeto
 from .models import Etapa, Projeto
 from .utils import (
     alterar_ativo, api_financeira, consultar_projetos, criar_registro, editar_celula,
@@ -38,6 +39,32 @@ def listar(request):
         "projetos": pagina, "page_obj": pagina, "status_choices": Projeto.Status.choices,
         "busca": busca, "status": status,
     })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def importar(request):
+    exigir_permissao(request.user, "projetos")
+    form = ImportarProjetoForm(request.POST if request.method == "POST" else None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            resultado = importar_projeto(request.user, form.cleaned_data["arquivo"])
+        except ValidationError as erro:
+            form.add_error("arquivo", erro)
+        else:
+            if resultado.novo:
+                projeto = resultado.projeto
+                messages.success(request, (
+                    f"Projeto importado: {projeto.etapas.count()} etapas, "
+                    f"{sum(e.orcamentos.count() for e in projeto.etapas.all())} orçamentos, "
+                    f"{sum(e.despesas.count() for e in projeto.etapas.all())} despesas e {projeto.lotes.count()} lotes históricos."
+                ))
+                if resultado.avisos:
+                    messages.warning(request, f"{len(resultado.avisos)} aviso(s). " + " ".join(resultado.avisos[:3]))
+            else:
+                messages.info(request, "Este arquivo já foi importado. O projeto existente foi aberto, sem duplicar os registros.")
+            return redirect("projetos:detalhe", pk=resultado.projeto.pk)
+    return render(request, "projetos/importar.html", {"form": form}, status=400 if request.method == "POST" else 200)
 
 
 @login_required

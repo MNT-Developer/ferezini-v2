@@ -13,6 +13,17 @@
   const dialog = document.getElementById("import-project-dialog");
   if (trigger && dialog) {
     trigger.addEventListener("click", () => dialog.showModal());
-    dialog.addEventListener("close", () => dialog.querySelector("form").reset());
+    dialog.querySelector("[data-close-import]").addEventListener("click", () => dialog.close());
+    dialog.querySelector("form").addEventListener("submit", () => {
+      const button = dialog.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.textContent = "Importando…";
+    });
+    dialog.addEventListener("close", () => {
+      dialog.querySelector("form").reset();
+      const button = dialog.querySelector('button[type="submit"]');
+      button.disabled = false;
+      button.textContent = "Importar";
+    });
   }
 })();

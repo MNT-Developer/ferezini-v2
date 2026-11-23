@@ -7,6 +7,7 @@ app_name = "projetos"
 urlpatterns = [
     path("", views.listar, name="listar"),
     path("novo/", views.novo, name="novo"),
+    path("importar/", views.importar, name="importar"),
     path("colaboradores/", views.colaboradores, name="colaboradores"),
     path("<int:pk>/", views.detalhe, name="detalhe"),
     path("<int:pk>/editar/", views.editar, name="editar"),

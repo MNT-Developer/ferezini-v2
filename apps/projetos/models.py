@@ -18,6 +18,10 @@ class Projeto(RegistroNegocio):
     nome = models.CharField(max_length=200)
     descricao = models.TextField(blank=True)
     cliente_contratante = models.CharField(max_length=200, blank=True)
+    tipo_obra = models.CharField("Tipo de obra", max_length=200, blank=True)
+    rg_ie = models.CharField("RG/IE", max_length=50, blank=True)
+    arquiteto = models.CharField("Arquiteto", max_length=200, blank=True)
+    arquivo_importacao_sha256 = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
     cpf_cnpj = models.CharField(max_length=18, blank=True)
     endereco_obra = models.TextField(blank=True)
     tamanho = models.DecimalField(
