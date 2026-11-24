@@ -11,6 +11,7 @@ urlpatterns = [
     path("colaboradores/", views.colaboradores, name="colaboradores"),
     path("<int:pk>/", views.detalhe, name="detalhe"),
     path("<int:pk>/editar/", views.editar, name="editar"),
+    path("<int:pk>/exportar/", views.exportar, name="exportar"),
     path("<int:pk>/colaboradores/", views.colaboradores, name="colaboradores_projeto"),
     path("<int:pk>/etapas/<int:etapa_id>/orcamento/", views.orcamento_etapa, name="orcamento_etapa"),
     path("<int:pk>/historico/", views.historico, name="historico"),

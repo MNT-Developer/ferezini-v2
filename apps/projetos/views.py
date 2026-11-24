@@ -1,4 +1,5 @@
 from urllib.parse import urlencode
+from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,7 +8,8 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
-from django.http import Http404, JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
+from django.utils.text import slugify
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -16,6 +18,7 @@ from apps.accounts.permissions import exigir_permissao, pode_alterar_responsavel
 
 from .forms import ProjetoForm, ImportarProjetoForm
 from .importacao import importar_projeto
+from .exportacao import exportar_projeto
 from .models import Etapa, Projeto
 from .utils import (
     alterar_ativo, api_financeira, consultar_projetos, criar_registro, editar_celula,
@@ -124,6 +127,25 @@ def importar(request):
                 messages.info(request, "Este arquivo já foi importado. O projeto existente foi aberto, sem duplicar os registros.")
             return redirect("projetos:detalhe", pk=resultado.projeto.pk)
     return render(request, "projetos/importar.html", {"form": form}, status=400 if request.method == "POST" else 200)
+
+
+@login_required
+@require_GET
+def exportar(request, pk):
+    exigir_permissao(request.user, "projetos")
+    projeto = get_object_or_404(Projeto, pk=pk)
+    try:
+        conteudo = exportar_projeto(request.user, projeto.pk)
+    except ValidationError as erro:
+        messages.error(request, " ".join(erro.messages))
+        return redirect("projetos:detalhe", pk=pk)
+    nome = slugify(projeto.nome)[:100] or "obra"
+    resposta = FileResponse(
+        BytesIO(conteudo), as_attachment=True, filename=f"projeto-{pk}-{nome}.xlsm",
+        content_type="application/vnd.ms-excel.sheet.macroEnabled.12",
+    )
+    resposta["Cache-Control"] = "private, no-store"
+    return resposta
 
 
 @login_required

@@ -43,6 +43,7 @@
         </p>
       </div>
       <div class="actions">
+        <a href="{% url 'projetos:exportar' projeto.pk %}" class="btn btn-outline">Exportar XLSM</a>
         <span class="badge status-{{ projeto.status|lower }}">{{ projeto.get_status_display }}</span><a href="{% url 'projetos:editar' projeto.pk %}" class="btn btn-outline">Editar projeto</a>
       </div>
     </div>

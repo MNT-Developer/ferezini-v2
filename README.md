@@ -16,18 +16,20 @@ As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
     tests/                  # testes JavaScript
     test_settings.py        # isolamento dos testes automatizados
     tests_deploy.py
-    versao/v.0.0.8.md         # versão atual em desenvolvimento
+    versao/v.0.0.8.md         # última versão finalizada
 ```
 
 O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
 
 A conexão é configurada por `DATABASE_URL=mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO`, usando `dj-database-url`. Caracteres especiais das credenciais precisam ser codificados na URL, conforme a [documentação da biblioteca](https://pypi.org/project/dj-database-url/3.1.2/). A configuração mantém conexões por até 600 segundos, com verificação de saúde e `ssl_require=False`. As variáveis separadas `DB_*` foram substituídas pela URL.
 
-A versão [v.0.0.7](.codex/versao/v.0.0.7.md) foi finalizada em **23/11/2026**, com autenticação sem distinção de caixa, PDFs via ReportLab e importação de projetos por Excel. A [v.0.0.6](.codex/versao/v.0.0.6.md) permanece como base dos quatro cards da página inicial e da conexão por `DATABASE_URL`. A versão ativa é a [v.0.0.8](.codex/versao/v.0.0.8.md), aberta em **23/11/2026**; as próximas atualizações serão consolidadas nela até seu encerramento por solicitação do usuário. A criação de outro documento de versão depende de solicitação explícita.
+A versão [v.0.0.7](.codex/versao/v.0.0.7.md) foi finalizada em **23/11/2026**, com autenticação sem distinção de caixa, PDFs via ReportLab e importação de projetos por Excel. A [v.0.0.6](.codex/versao/v.0.0.6.md) permanece como base dos quatro cards da página inicial e da conexão por `DATABASE_URL`. A versão [v.0.0.8](.codex/versao/v.0.0.8.md) foi finalizada em **24/11/2026**, com responsável automático no cadastro, navegação de projetos por responsável e exportação XLSM. Nenhuma nova versão foi iniciada, conforme solicitação do usuário. A criação de outro documento de versão depende de solicitação explícita.
 
 Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
 
 O botão **Importar**, disponível em Início e Projetos, recebe `.xlsm`, `.xlsx` e `.xls` com as abas Painel, Serviços e Custos e Projeto. A importação cria uma nova obra com etapas, orçamentos e despesas; o responsável técnico é o usuário que enviou o arquivo. Os envios históricos são agrupados por data, sem taxa adicional, e ficam disponíveis no histórico de lotes para gerar PDF. Novos envios continuam usando a taxa normal do projeto. Macros não são executadas, o arquivo original é preservado e uma falha desfaz toda a importação. Reenviar o mesmo arquivo abre o projeto já importado. Consulte o [mapeamento e as validações na v.0.0.7](.codex/versao/v.0.0.7.md).
+
+No detalhe da obra, **Exportar XLSM** baixa o acompanhamento usando o [modelo em branco](media/modelos/projeto.xlsm), preservando macros, botões e abas originais. A primeira despesa ocupa a linha do orçamento; as seguintes ficam nas linhas abaixo. Os IDs das etapas identificam os grupos na planilha. Taxas confirmadas são lançadas como itens manuais para conciliar os totais. Inclua `media/modelos/projeto.xlsm` na implantação; a geração roda em Linux com as dependências pip existentes, sem precisar de Excel instalado. O [utilitário de manutenção](.codex/scripts/preparar_modelo_xlsm.py) recria o modelo a partir do original: `python .codex/scripts/preparar_modelo_xlsm.py caminho/original.xlsm --substituir`. Mapeamento, escopo e validações constam na [v.0.0.8](.codex/versao/v.0.0.8.md).
 
 Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, mysqlclient e Cron**. Os PDFs usam ReportLab e fontes incluídas no pacote pip.
 
@@ -101,4 +103,4 @@ node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex
 
 No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF usa ReportLab, instalado pelo manifesto pip, com as fontes fornecidas pelo próprio pacote. O layout dos PDFs é definido em `utils/pdf.py`; os antigos templates de impressão HTML permanecem como referência histórica de apresentação.
 
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão ativa v.0.0.8](.codex/versao/v.0.0.8.md), [versão finalizada v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
+Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão finalizada v.0.0.8](.codex/versao/v.0.0.8.md), [versão finalizada v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
