@@ -1,106 +1,86 @@
-# Ferezini — Projeto FRZ v2
+# Ferezini — Gestão Financeira de Obras
 
-Gestão financeira de obras com Django: projetos, etapas, orçamentos, despesas, auditoria, lotes com snapshots, PDF em memória e fila de e-mails. Interface em português. Relatórios Gerais e Diretoria permanecem em desenvolvimento.
+O Ferezini organiza o acompanhamento financeiro de obras: o que foi previsto, o que já foi gasto e quais despesas ainda precisam ser apresentadas ao cliente. Cada projeto reúne seus dados, responsáveis, etapas, orçamentos, notas e relatórios em um só lugar.
 
-A implantação é **Linux na HostMídia, com cPanel/Python Selector, Passenger, MySQL/MariaDB e Cron**. Windows é a estação de desenvolvimento. Há um único módulo de configuração: [`config/settings.py`](config/settings.py), controlado pelo `.env` privado.
+A **versão 1.0.0** consolida as funcionalidades construídas durante a fase de desenvolvimento.
 
-## Documentação e operação
+## Para que serve
 
-As ferramentas de apoio ficam em [`.codex/`](.codex/README.md):
+- Cadastrar obras, clientes, contatos e responsáveis técnicos.
+- Planejar custos por etapa e acompanhar as despesas de cada orçamento.
+- Comparar valores orçados e realizados e consultar o saldo da obra.
+- Preparar relatórios de despesas, aplicar a taxa de serviço e solicitar envio por e-mail.
+- Consultar envios anteriores e o histórico de alterações.
+- Trazer um acompanhamento do Excel ou exportar a obra para a planilha com macros.
+- Gerenciar usuários e acessos conforme a função de cada pessoa.
 
-```text
-.codex/
-    .env.example
-    scripts/                 # instalação, atualização, Cron e testes
-    docs/hostmidia.md        # guia de implantação completo
-    tests/                  # testes JavaScript
-    test_settings.py        # isolamento dos testes automatizados
-    tests_deploy.py
-    versao/v.0.0.8.md         # última versão finalizada
-```
+## Primeiro acesso
 
-O manifesto de dependencias fica em [`requirements.txt`](requirements.txt), na raiz.
+Abra o endereço do sistema informado pela organização e entre com o usuário e a senha fornecidos. Usuário e senha não diferenciam maiúsculas de minúsculas. Novas senhas precisam ter pelo menos seis caracteres.
 
-A conexão é configurada por `DATABASE_URL=mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO`, usando `dj-database-url`. Caracteres especiais das credenciais precisam ser codificados na URL, conforme a [documentação da biblioteca](https://pypi.org/project/dj-database-url/3.1.2/). A configuração mantém conexões por até 600 segundos, com verificação de saúde e `ssl_require=False`. As variáveis separadas `DB_*` foram substituídas pela URL.
+Se aparecer uma solicitação de redefinição, cadastre a nova senha para continuar. Caso não consiga entrar, procure o responsável pela gestão dos usuários.
 
-A versão [v.0.0.7](.codex/versao/v.0.0.7.md) foi finalizada em **23/11/2026**, com autenticação sem distinção de caixa, PDFs via ReportLab e importação de projetos por Excel. A [v.0.0.6](.codex/versao/v.0.0.6.md) permanece como base dos quatro cards da página inicial e da conexão por `DATABASE_URL`. A versão [v.0.0.8](.codex/versao/v.0.0.8.md) foi finalizada em **24/11/2026**, com responsável automático no cadastro, navegação de projetos por responsável e exportação XLSM. Nenhuma nova versão foi iniciada, conforme solicitação do usuário. A criação de outro documento de versão depende de solicitação explícita.
+O menu apresenta as áreas permitidas para seu perfil. A página Início mostra os projetos e quatro indicadores: total cadastrado, projetos em andamento, quantidade e valor das notas aguardando envio.
 
-Os dados descritivos da obra nos relatórios de envio e no detalhe dos lotes vêm sempre do cadastro atual do projeto. Não são duplicados no lote nem nos snapshots das notas. Notas, valores financeiros e destinatários dos e-mails permanecem registrados na confirmação. A migração `envios.0002` remove as cópias antigas dos dados do projeto.
+## Cadastrar e encontrar uma obra
 
-O botão **Importar**, disponível em Início e Projetos, recebe `.xlsm`, `.xlsx` e `.xls` com as abas Painel, Serviços e Custos e Projeto. A importação cria uma nova obra com etapas, orçamentos e despesas; o responsável técnico é o usuário que enviou o arquivo. Os envios históricos são agrupados por data, sem taxa adicional, e ficam disponíveis no histórico de lotes para gerar PDF. Novos envios continuam usando a taxa normal do projeto. Macros não são executadas, o arquivo original é preservado e uma falha desfaz toda a importação. Reenviar o mesmo arquivo abre o projeto já importado. Consulte o [mapeamento e as validações na v.0.0.7](.codex/versao/v.0.0.7.md).
+1. Acesse **Projetos → Novo projeto**.
+2. Preencha nome da obra e os dados disponíveis de cliente, endereço, tamanho, taxa e contatos.
+3. Selecione o responsável técnico ou deixe em branco para atribuir a obra a você.
+4. Clique em **Salvar projeto**. Novas obras começam em andamento.
 
-No detalhe da obra, **Exportar XLSM** baixa o acompanhamento usando o [modelo em branco](media/modelos/projeto.xlsm), preservando macros, botões e abas originais. A primeira despesa ocupa a linha do orçamento; as seguintes ficam nas linhas abaixo. Os IDs das etapas identificam os grupos na planilha. Taxas confirmadas são lançadas como itens manuais para conciliar os totais. Inclua `media/modelos/projeto.xlsm` na implantação; a geração roda em Linux com as dependências pip existentes, sem precisar de Excel instalado. O [utilitário de manutenção](.codex/scripts/preparar_modelo_xlsm.py) recria o modelo a partir do original: `python .codex/scripts/preparar_modelo_xlsm.py caminho/original.xlsm --substituir`. Mapeamento, escopo e validações constam na [v.0.0.8](.codex/versao/v.0.0.8.md).
+Em **Por responsável**, abra a pasta de uma pessoa e escolha **Em Andamento** ou **Finalizadas**. Finalizadas reúne projetos concluídos e cancelados. Obras antigas sem responsável aparecem em **Sem responsável**.
 
-Leia o [guia HostMídia](.codex/docs/hostmidia.md) antes de instalar. A [HostMídia anuncia Python/cPanel](https://www.hostmidia.com.br/hospedagem-de-sites/); confirme no plano **Python 3.11+, Passenger, mysqlclient e Cron**. Os PDFs usam ReportLab e fontes incluídas no pacote pip.
+Em **Todos os projetos**, consulte a lista geral. As tabelas mostram 25 projetos por página e permitem filtrar por título e cliente. Clique na linha de uma obra para abri-la.
 
-## Implantação no cPanel
+Quem tem acesso a projetos pode fazer o primeiro vínculo de uma obra antiga sem responsável. Depois de vincular, sua substituição ou remoção exige acesso de Diretoria ou Administrativo.
 
-Envie o projeto, incluindo `.codex`, para uma pasta **fora de `public_html`**. No Setup Python App, selecione Python 3.12/3.13, configure a raiz do projeto, startup file `passenger_wsgi.py` e entry point `application`. Use um subdomínio com URL na raiz. Execute com o Python absoluto do virtualenv informado pelo painel; adapte o caminho ilustrativo:
+## Planejar e registrar os gastos
 
-```sh
-cd /home/USUARIO/frz-v2
-/home/USUARIO/virtualenv/frz-v2/3.12/bin/python .codex/scripts/instalar.py
-# Configure o .env privado com dominio, banco e SMTP do servidor.
-/home/USUARIO/virtualenv/frz-v2/3.12/bin/python .codex/scripts/atualizar.py
-/home/USUARIO/virtualenv/frz-v2/3.12/bin/python manage.py criar_gestor --username gestor
-/home/USUARIO/virtualenv/frz-v2/3.12/bin/python manage.py createsuperuser
-```
+Crie as etapas do trabalho na obra. Ao criar uma etapa, sua tela de orçamento é aberta para incluir os itens previstos, com descrição, quantidade, unidade e preço. O acesso posterior fica na aba **Orçamento**.
 
-O instalador preserva o `.env` existente. `atualizar.py` valida produção/banco/PDF, aplica migrações, coleta estáticos e solicita reinício ao Passenger. Confirme **Restart** e SSL pelo cPanel. WhiteNoise serve os estáticos pelo WSGI.
+Na aba **Geral**, abra os agrupamentos para consultar ou lançar despesas. Cada nota pode pertencer a um orçamento ou ficar diretamente na etapa, em **Demais Despesas**. Informe os dados disponíveis: fornecedor, nota ou pedido, emissão, vencimento, valor e observação.
 
-Configure o Cron conforme [o exemplo](.codex/scripts/cron_exemplo.txt), usando o mesmo Python absoluto e `.codex/scripts/processar_emails.py --limite 1`. A frequência respeita o plano; o banco continua controlando as três horas dos reenvios.
+As células são salvas ao sair do campo. Confira as mensagens de salvamento e resolva os erros antes de sair da tela. Registros incompletos podem permanecer como rascunho; notas precisam de fornecedor e valor positivo para entrar no envio.
 
-Produção exige debug desativado, segredo forte, hosts explícitos, HTTPS e SMTP. `passenger_wsgi.py` é parte da execução e fica na raiz; os arquivos de instalação e documentação permanecem em `.codex`.
+Alterações em despesas já confirmadas ou em orçamentos que têm despesas exigem justificativa. Inativar preserva o histórico; reativar uma nota já enviada não a torna disponível para outro envio.
 
-## Desenvolvimento local
+## Preparar e enviar despesas
 
-No Windows, use o mesmo manifesto e configuração:
+1. Abra **Envio de Despesas** dentro da obra.
+2. Selecione as notas. Taxa e total são recalculados conforme a seleção.
+3. Se alterar a taxa sugerida, informe a justificativa. Mudar novamente a seleção recalcula e limpa o ajuste anterior.
+4. Escolha gerar o relatório ou gerar e solicitar envio por e-mail. Para enviar, a obra precisa de ao menos um contato ativo e destinatários selecionados.
+5. Confira a prévia e confirme.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --no-cache-dir -r requirements.txt
-# Se ainda nao existir .env, copie .codex/.env.example para a raiz.
-# No .env local: DJANGO_DEBUG=true, hosts locais, DATABASE_URL e backend de e-mail console.
-.\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py runserver
-```
+A confirmação cria um lote: um grupo de notas com valores e data registrados. Baixe novamente o relatório no histórico dos envios. O e-mail é processado pela rotina da organização; acompanhe sua situação no sistema. A aceitação pelo serviço de e-mail não garante entrega na caixa de entrada ou leitura.
 
-Login: `/entrar/`. Admin: `/admin/`. `criar_gestor` cria as permissões operacionais; `createsuperuser` concede privilégios técnicos independentes das seis flags do sistema.
+Se o resultado for incerto, confira com o responsável antes de solicitar outro envio. Reenviar reutiliza o lote e não duplica as notas.
 
-Login e novas senhas não diferenciam maiúsculas de minúsculas. A única regra de força é o mínimo de seis caracteres. A migração `accounts.0004` exige que as contas com senhas antigas as redefinam antes de continuar: a senha atual permite entrar na tela de redefinição. A alteração também pode ser feita por um gestor autorizado ou pelo comando `changepassword`. As senhas continuam armazenadas como hashes PBKDF2 com salt.
+## Consultar relatórios e histórico
 
-O responsável técnico pode ser selecionado no cadastro; quando o campo fica em branco, o sistema atribui o projeto ao usuário que o está cadastrando. Na edição, quem acessa projetos pode fazer o primeiro vínculo de um cadastro antigo sem responsável; depois, somente Diretoria ou Administrativo podem substituí-lo ou removê-lo. A seleção mostra colaboradores ativos que não sejam superusuários. Textos anteriores à conversão para usuário ficam preservados no cadastro, sem associação automática.
+O **Relatório de Despesa** da obra consulta um período e permite baixar o PDF dos lotes confirmados nessas datas. O histórico identifica quem alterou um registro e a justificativa informada.
 
-A página **Projetos** tem as abas **Por responsável** e **Todos os projetos**. A primeira organiza os projetos ativos em pastas por responsável e subpastas Em Andamento e Finalizadas (concluídos e cancelados); cadastros antigos sem vínculo ficam em Sem responsável. As duas visualizações usam a mesma tabela, com filtros independentes por título e cliente e paginação de 25 projetos. Os filtros e a paginação preservam a pasta selecionada.
+A identificação da obra nos relatórios acompanha seu cadastro atual. Notas e valores confirmados no lote permanecem históricos.
 
-O módulo **Gestão de Usuários** permite cadastrar, editar, inativar e reativar usuários, com busca, filtro de situação e paginação de 25 registros. O acesso exige Diretoria, Gestão de funcionários ou superusuário. As contas de superusuários ficam fora da listagem operacional. A inativação preserva vínculos e histórico e impede o acesso enquanto a conta estiver inativa.
+## Usar o acompanhamento em Excel
 
-Somente Diretoria ou superusuários podem visualizar/gerenciar contas da Diretoria e conceder essa permissão, tanto no cadastro quanto na edição. Para os demais gestores, essas contas não aparecem nas listas ou pesquisas e a flag de Diretoria não aparece no formulário. As mesmas restrições são aplicadas ao Django Admin.
+**Importar:** em Início ou Projetos, clique em **Importar** e escolha `.xlsm`, `.xlsx` ou `.xls` com as abas **Painel**, **Serviços e Custos** e **Projeto**. A importação cria uma obra, atribui você como responsável e organiza etapas, orçamentos, despesas e envios históricos. Reenviar um arquivo idêntico já importado abre a obra existente. Confira os avisos ao concluir.
 
-## Formatação dos templates
+Envios históricos importados não recebem taxa adicional; novos envios calculam a taxa normalmente. Quando for solicitado, recalcule e salve a planilha no Excel antes de tentar importar novamente.
 
-Os templates usam UTF-8, finais de linha LF e indentação de dois espaços, conforme o [guia de estilo do Django](https://docs.djangoproject.com/en/5.2/internals/contributing/writing-code/coding-style/). A configuração do formatador fica em [`.codex/djlint.toml`](.codex/djlint.toml).
+**Exportar:** no detalhe da obra, clique em **Exportar XLSM**. A primeira despesa fica na linha do orçamento e as demais nas linhas abaixo. O arquivo mantém as macros e os botões do modelo de acompanhamento do sistema; não é uma cópia de qualquer planilha enviada anteriormente.
 
-Para formatar novamente ou conferir o padrão, instale a ferramenta de desenvolvimento no ambiente virtual:
+Use descrições distintas para os orçamentos da mesma etapa se precisar exportar e reimportar. A planilha não substitui uma cópia completa dos registros do sistema. Os campos atendidos e limites do modelo estão na documentação de referência.
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install djlint==1.36.4
-.\.venv\Scripts\python.exe .codex/scripts/formatar_templates.py
-.\.venv\Scripts\python.exe .codex/scripts/formatar_templates.py --check
-```
+## Gerenciar a equipe
 
-No Linux, use o executável do virtualenv correspondente. O formatador atua somente em `templates/`; ele não é uma dependência de execução da aplicação.
+Em **Gestão de Usuários**, pessoas autorizadas podem cadastrar, editar, inativar e reativar usuários. A lista permite pesquisar, filtrar a situação e navegar em páginas de 25 registros. Deixe Nova senha em branco na edição para manter a senha atual.
 
-Para gerar os arquivos `.xls` dos testes de importação, instale também a ferramenta de desenvolvimento `xlwt==1.3.0` no virtualenv. A leitura de `.xls` em produção usa `xlrd`, já incluído no manifesto, e não depende de `xlwt`.
+Somente a Diretoria ou um administrador técnico autorizado pode gerenciar contas da Diretoria ou conceder esse acesso. Contas de administrador técnico são gerenciadas separadamente da lista operacional.
 
-## Verificações
+## Abrangência e documentação
 
-```powershell
-.\.venv\Scripts\python.exe .codex/scripts/testar.py
-.\.venv\Scripts\python.exe .codex/scripts/testar.py --mysql --pdf-real
-node --test .codex/tests/formatacao.test.cjs .codex/tests/envios.test.cjs .codex/tests/responsavel-tecnico.test.cjs
-```
+**Relatórios Gerais** e **Diretoria** ainda exibem telas de funcionalidades em desenvolvimento. Os fluxos disponíveis são o acompanhamento por obra, seus relatórios de despesas e a gestão de usuários descritos neste guia.
 
-No Linux, use o Python do virtualenv correspondente. Os testes não enviam e-mails reais. SQLite fica restrito ao isolamento dos testes; a aplicação usa MySQL/MariaDB. PDF usa ReportLab, instalado pelo manifesto pip, com as fontes fornecidas pelo próprio pacote. O layout dos PDFs é definido em `utils/pdf.py`; os antigos templates de impressão HTML permanecem como referência histórica de apresentação.
-
-Consulte [implantação e backup](.codex/docs/hostmidia.md), [dependências](.codex/docs/dependencias.md), [decisões pendentes](.codex/docs/decisoes_pendentes.md), [versão finalizada v.0.0.8](.codex/versao/v.0.0.8.md), [versão finalizada v.0.0.7](.codex/versao/v.0.0.7.md), [versão finalizada v.0.0.6](.codex/versao/v.0.0.6.md), [histórico v.0.0.5](.codex/versao/v.0.0.5.md), [mudanças v.0.0.4](.codex/versao/v.0.0.4.md) e [base de infraestrutura v.0.0.3](.codex/versao/v.0.0.3.md).
+A documentação de referência começa no [guia de documentação](.documentacao/001_GUIA_DA_DOCUMENTACAO.md), com regras, fluxos e orientações para a equipe que mantém o sistema.
