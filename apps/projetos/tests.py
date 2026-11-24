@@ -92,6 +92,7 @@ class FinanceiroTests(TestCase):
         projeto = salvar_projeto(self.usuario, form)
         edicao = ProjetoForm(data={
             "nome": projeto.nome, "taxa_servico": "0", "tamanho": "150.75", "versao": projeto.versao,
+            "responsavel_tecnico": projeto.responsavel_tecnico_id,
         }, instance=projeto, usuario=self.usuario)
         self.assertTrue(edicao.is_valid(), edicao.errors)
         projeto = salvar_projeto(self.usuario, edicao)

@@ -46,7 +46,29 @@ class ResponsavelTecnicoTests(TestCase):
                 form = ProjetoForm(self.dados(responsavel_tecnico=responsavel.pk if responsavel else ""), usuario=self.operador)
                 self.assertTrue(form.is_valid(), form.errors)
                 projeto = salvar_projeto(self.operador, form)
-                self.assertEqual(projeto.responsavel_tecnico, responsavel)
+                self.assertEqual(projeto.responsavel_tecnico, responsavel or self.operador)
+                historico = HistoricoAlteracao.objects.get(projeto=projeto, acao="CRIACAO")
+                self.assertEqual(historico.novos["responsavel_tecnico"], (responsavel or self.operador).pk)
+
+    def test_novo_sem_campo_responsavel_vincula_usuario_autenticado(self):
+        self.client.force_login(self.operador)
+        resposta = self.client.post(reverse("projetos:novo"), self.dados(nome="Nova obra"))
+        self.assertEqual(resposta.status_code, 302)
+        projeto = Projeto.objects.get(nome="Nova obra")
+        self.assertEqual(projeto.responsavel_tecnico_id, self.operador.pk)
+
+    def test_editar_projeto_legado_sem_responsavel_nao_cria_vinculo_automatico(self):
+        form = ProjetoForm(self.dados(self.projeto), instance=self.projeto, usuario=self.operador)
+        self.assertTrue(form.is_valid(), form.errors)
+        projeto = salvar_projeto(self.operador, form)
+        self.assertIsNone(projeto.responsavel_tecnico_id)
+
+    def test_superusuario_com_acesso_operacional_recebe_atribuicao_automatica(self):
+        self.tecnico.permissao_gestao_projetos = True
+        self.tecnico.save()
+        form = ProjetoForm(self.dados(), usuario=self.tecnico)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(salvar_projeto(self.tecnico, form).responsavel_tecnico_id, self.tecnico.pk)
 
     def test_primeiro_vinculo_permitido_e_auditado(self):
         form = ProjetoForm(self.dados(self.projeto, responsavel_tecnico=self.ana.pk), instance=self.projeto, usuario=self.operador)

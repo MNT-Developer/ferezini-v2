@@ -360,14 +360,15 @@ def salvar_projeto(usuario, form):
     projeto = Projeto(criado_por=usuario) if novo else Projeto.objects.select_for_update().get(pk=form.instance.pk)
     if not novo:
         validar_versao(projeto, form.cleaned_data["versao"])
-    responsavel = form.cleaned_data["responsavel_tecnico"]
+    responsavel_automatico = novo and form.cleaned_data["responsavel_tecnico"] is None
+    responsavel = usuario if responsavel_automatico else form.cleaned_data["responsavel_tecnico"]
     if projeto.responsavel_tecnico_id != getattr(responsavel, "pk", None):
         # A autorização usa o estado bloqueado, nunca a instância alterada pelo ModelForm.
         if not pode_alterar_responsavel(usuario, projeto):
             raise PermissionDenied("Somente Diretoria ou Administrativo podem alterar o responsável técnico já vinculado.")
         if responsavel is not None:
             responsavel = get_user_model().objects.select_for_update().get(pk=responsavel.pk)
-            if not responsavel.is_active or responsavel.is_superuser:
+            if not responsavel.is_active or (responsavel.is_superuser and not responsavel_automatico):
                 raise ValidationError({"responsavel_tecnico": "Selecione um colaborador ativo que não seja superusuário."})
             form.cleaned_data["responsavel_tecnico"] = responsavel
     anteriores = {} if novo else serializar_registro(projeto)

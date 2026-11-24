@@ -1,0 +1,59 @@
+<section class="card">
+  <form class="project-filters" method="get">
+    <input type="hidden" name="aba" value="{{ aba }}">
+    {% if responsavel %}
+      <input type="hidden" name="responsavel" value="{{ responsavel }}">
+      <input type="hidden" name="situacao" value="{{ situacao }}">
+    {% endif %}
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-md-5">
+        <div class="field">
+          <label for="titulo-projeto">
+            Título
+          </label>
+          <input id="titulo-projeto"
+                 class="form-control"
+                 type="search"
+                 name="titulo"
+                 value="{{ titulo }}"
+                 placeholder="Buscar pelo título da obra">
+        </div>
+      </div>
+      <div class="col-12 col-md-5">
+        <div class="field">
+          <label for="cliente-projeto">
+            Cliente
+          </label>
+          <input id="cliente-projeto"
+                 class="form-control"
+                 type="search"
+                 name="cliente"
+                 value="{{ cliente }}"
+                 placeholder="Buscar pelo cliente">
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <button class="btn btn-outline w-100" type="submit">
+          Filtrar
+        </button>
+      </div>
+    </div>
+  </form>
+  <div class="section-heading">
+    <h2>
+      {% if responsavel %}
+        {{ nome_situacao }}
+      {% else %}
+        Todos os projetos
+      {% endif %}
+    </h2>
+    <div class="actions">
+      <span class="muted">Registros: {{ page_obj.paginator.count }}</span>
+      {% if titulo or cliente %}
+        <a href="{{ url_limpar }}" class="text-link">Limpar filtros</a>
+      {% endif %}
+    </div>
+  </div>
+  {% include "projetos/_tabela_lista.html" %}
+  {% include "core/paginacao.html" %}
+</section>

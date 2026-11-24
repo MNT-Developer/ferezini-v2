@@ -67,7 +67,9 @@ Login: `/entrar/`. Admin: `/admin/`. `criar_gestor` cria as permissões operacio
 
 Login e novas senhas não diferenciam maiúsculas de minúsculas. A única regra de força é o mínimo de seis caracteres. A migração `accounts.0004` exige que as contas com senhas antigas as redefinam antes de continuar: a senha atual permite entrar na tela de redefinição. A alteração também pode ser feita por um gestor autorizado ou pelo comando `changepassword`. As senhas continuam armazenadas como hashes PBKDF2 com salt.
 
-O responsável técnico é um colaborador opcional. Quem acessa projetos pode fazer o primeiro vínculo; depois, somente Diretoria ou Administrativo podem substituí-lo ou removê-lo. A seleção mostra colaboradores ativos que não sejam superusuários. Textos anteriores à conversão para usuário ficam preservados no cadastro, sem associação automática.
+O responsável técnico pode ser selecionado no cadastro; quando o campo fica em branco, o sistema atribui o projeto ao usuário que o está cadastrando. Na edição, quem acessa projetos pode fazer o primeiro vínculo de um cadastro antigo sem responsável; depois, somente Diretoria ou Administrativo podem substituí-lo ou removê-lo. A seleção mostra colaboradores ativos que não sejam superusuários. Textos anteriores à conversão para usuário ficam preservados no cadastro, sem associação automática.
+
+A página **Projetos** tem as abas **Por responsável** e **Todos os projetos**. A primeira organiza os projetos ativos em pastas por responsável e subpastas Em Andamento e Finalizadas (concluídos e cancelados); cadastros antigos sem vínculo ficam em Sem responsável. As duas visualizações usam a mesma tabela, com filtros independentes por título e cliente e paginação de 25 projetos. Os filtros e a paginação preservam a pasta selecionada.
 
 O módulo **Gestão de Usuários** permite cadastrar, editar, inativar e reativar usuários, com busca, filtro de situação e paginação de 25 registros. O acesso exige Diretoria, Gestão de funcionários ou superusuário. As contas de superusuários ficam fora da listagem operacional. A inativação preserva vínculos e histórico e impede o acesso enquanto a conta estiver inativa.
 

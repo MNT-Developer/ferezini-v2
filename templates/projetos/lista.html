@@ -5,6 +5,9 @@
 {% block title %}
   Projetos
 {% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/projetos-lista.css' %}">
+{% endblock %}
 {% block content %}
   <div class="page-heading project-list-heading">
     <div>
@@ -20,37 +23,44 @@
     </div>
     {% include "projetos/_acoes_lista.html" %}
   </div>
-  <section class="card">
-    <form class="toolbar" method="get">
-      <div class="search-field">
-        <label class="visually-hidden" for="busca">
-          Buscar projetos
-        </label>
-        <input id="busca" name="busca" value="{{ busca }}" placeholder="Buscar projeto ou cliente…" type="search">
-      </div>
-      <label class="visually-hidden" for="status">
-        Status
-      </label>
-      <select name="status" id="status">
-        <option value="">
-          Todos os status
-        </option>
-        {% for valor,rotulo in status_choices %}
-          <option value="{{ valor }}" {% if valor == status %}selected{% endif %}>
-            {{ rotulo }}
-          </option>
-        {% endfor %}
-      </select>
-      <button class="btn btn-outline" type="submit">
-        Filtrar
-      </button>
-      {% if busca or status %}
-        <a href="{% url 'projetos:listar' %}" class="text-link">Limpar</a>
+  <nav class="tabs" aria-label="Visualização dos projetos">
+    <a href="?aba=responsaveis"
+       class="tab
+              {% if aba == 'responsaveis' %}
+                active
+              {% endif %}"
+       {% if aba == 'responsaveis' %}
+         aria-current="page"
+       {% endif %}>Por responsável</a>
+    <a href="?aba=todos"
+       class="tab
+              {% if aba == 'todos' %}
+                active
+              {% endif %}"
+       {% if aba == 'todos' %}
+         aria-current="page"
+       {% endif %}>Todos os projetos</a>
+  </nav>
+  {% if aba == 'responsaveis' %}
+    <nav class="project-breadcrumb" aria-label="Caminho das pastas">
+      <a href="?aba=responsaveis">Responsáveis</a>
+      {% if responsavel %}
+        <span aria-hidden="true">/</span>
+        {% if situacao %}
+          <a href="{{ url_responsavel }}">{{ nome_responsavel }}</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{{ nome_situacao }}</span>
+        {% else %}
+          <span aria-current="page">{{ nome_responsavel }}</span>
+        {% endif %}
       {% endif %}
-    </form>
-    {% include "projetos/_tabela_lista.html" %}
-    {% include "core/paginacao.html" %}
-  </section>
+    </nav>
+  {% endif %}
+  {% if exibir_tabela %}
+    {% include "projetos/_lista_filtrada.html" %}
+  {% else %}
+    {% include "projetos/_pastas_lista.html" %}
+  {% endif %}
   {% include "projetos/_importar_modal.html" %}
 {% endblock %}
 {% block extra_js %}

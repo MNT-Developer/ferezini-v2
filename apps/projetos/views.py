@@ -1,10 +1,13 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db.models.functions import Lower
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -18,27 +21,83 @@ from .utils import (
     alterar_ativo, api_financeira, consultar_projetos, criar_registro, editar_celula,
     estrutura_projeto, ler_json, reordenar, salvar_projeto, serializar_registro, totais_projeto,
 )
-from django.http import JsonResponse
 
 
 @login_required
 @require_GET
 def listar(request):
     exigir_permissao(request.user, "projetos")
-    projetos = consultar_projetos().filter(ativo=True)
-    busca = request.GET.get("busca", request.GET.get("q", "")).strip()
-    status = request.GET.get("status", "")
-    if busca:
-        projetos = projetos.filter(nome__icontains=busca)
-    if status in Projeto.Status.values:
-        projetos = projetos.filter(status=status)
-    pagina = Paginator(projetos, 50).get_page(request.GET.get("pagina"))
-    for projeto in pagina:
-        projeto.totais = totais_projeto(projeto)
-    return render(request, "projetos/lista.html", {
-        "projetos": pagina, "page_obj": pagina, "status_choices": Projeto.Status.choices,
-        "busca": busca, "status": status,
-    })
+    aba = "todos" if request.GET.get("aba") == "todos" else "responsaveis"
+    titulo = request.GET.get("titulo", "").strip()
+    cliente = request.GET.get("cliente", "").strip()
+    contexto = {"aba": aba, "titulo": titulo, "cliente": cliente, "pastas": []}
+    filtros = {"aba": aba}
+    projetos = Projeto.objects.filter(ativo=True)
+    exibir_tabela = aba == "todos"
+
+    if aba == "responsaveis":
+        grupos = projetos.values(
+            "responsavel_tecnico_id", "responsavel_tecnico__first_name",
+            "responsavel_tecnico__last_name", "responsavel_tecnico__username",
+        ).order_by().annotate(quantidade=Count("pk"))
+        pastas = []
+        for grupo in grupos:
+            identificador = (
+                str(grupo["responsavel_tecnico_id"]) if grupo["responsavel_tecnico_id"] else "sem-responsavel"
+            )
+            nome = " ".join(filter(None, [
+                grupo["responsavel_tecnico__first_name"], grupo["responsavel_tecnico__last_name"],
+            ])).strip()
+            pastas.append({
+                "id": identificador, "nome": nome or grupo["responsavel_tecnico__username"] or "Sem responsável",
+                "quantidade": grupo["quantidade"],
+                "url": "?" + urlencode({"aba": aba, "responsavel": identificador}),
+            })
+        pastas.sort(key=lambda pasta: (pasta["id"] == "sem-responsavel", pasta["nome"].casefold(), pasta["id"]))
+        responsavel = request.GET.get("responsavel", "")
+        contexto["pastas"] = pastas
+        contexto["titulo_pastas"] = "Responsáveis"
+        if responsavel:
+            pasta = next((p for p in pastas if p["id"] == responsavel), None)
+            if pasta is None:
+                raise Http404("Responsável sem projetos disponíveis.")
+            filtros["responsavel"] = responsavel
+            projetos = projetos.filter(responsavel_tecnico_id=None if responsavel == "sem-responsavel" else responsavel)
+            contexto.update(responsavel=responsavel, nome_responsavel=pasta["nome"], url_responsavel=pasta["url"])
+            situacoes = [
+                ("em-andamento", "Em Andamento", [Projeto.Status.EM_ANDAMENTO]),
+                ("finalizadas", "Finalizadas", [Projeto.Status.CONCLUIDO, Projeto.Status.CANCELADO]),
+            ]
+            contagens = projetos.aggregate(**{
+                codigo: Count("pk", filter=Q(status__in=status)) for codigo, _, status in situacoes
+            })
+            contexto["pastas"] = [{
+                "nome": nome, "quantidade": contagens[codigo],
+                "url": "?" + urlencode({**filtros, "situacao": codigo}),
+            } for codigo, nome, _ in situacoes]
+            contexto["titulo_pastas"] = pasta["nome"]
+            situacao = request.GET.get("situacao", "")
+            if situacao:
+                selecionada = next((s for s in situacoes if s[0] == situacao), None)
+                if selecionada is None:
+                    raise Http404("Pasta de projetos não encontrada.")
+                filtros["situacao"] = situacao
+                projetos = projetos.filter(status__in=selecionada[2])
+                contexto.update(situacao=situacao, nome_situacao=selecionada[1])
+                exibir_tabela = True
+
+    contexto.update(exibir_tabela=exibir_tabela, url_limpar="?" + urlencode(filtros))
+    if exibir_tabela:
+        if titulo:
+            projetos = projetos.filter(nome__icontains=titulo)
+        if cliente:
+            projetos = projetos.filter(cliente_contratante__icontains=cliente)
+        projetos = consultar_projetos().filter(pk__in=projetos.values("pk"))
+        pagina = Paginator(projetos, 25).get_page(request.GET.get("pagina"))
+        for projeto in pagina:
+            projeto.totais = totais_projeto(projeto)
+        contexto.update(projetos=pagina, page_obj=pagina)
+    return render(request, "projetos/lista.html", contexto)
 
 
 @login_required

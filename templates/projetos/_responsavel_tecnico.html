@@ -49,6 +49,9 @@
   <small class="field-help" id="responsavel-help">
     {% if form.pode_editar_responsavel %}
       Opcional. Clique em um dos campos ou pressione Enter para selecionar o colaborador.
+      {% if not projeto %}
+        Se deixar em branco, você será definido como responsável ao salvar.
+      {% endif %}
     {% else %}
       Somente Diretoria ou Administrativo podem alterar o responsável técnico já vinculado.
     {% endif %}

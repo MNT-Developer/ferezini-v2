@@ -1,0 +1,41 @@
+<section aria-labelledby="titulo-pastas">
+  <h2 class="project-folder-heading" id="titulo-pastas">
+    {{ titulo_pastas }}
+  </h2>
+  <div class="row g-3">
+    {% for pasta in pastas %}
+      <div class="col-12 col-md-6 col-xl-4">
+        <a class="project-folder" href="{{ pasta.url }}">
+          <svg class="project-folder-icon"
+               width="40"
+               height="40"
+               viewBox="0 0 32 32"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="1.5"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M3 9V6a2 2 0 0 1 2-2h7l3 4h12a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
+            <path d="M3 11h26" />
+          </svg>
+          <span class="project-folder-details">
+            <strong>{{ pasta.nome }}</strong>
+            <small>{{ pasta.quantidade }} projeto{{ pasta.quantidade|pluralize }}</small>
+          </span>
+          <span class="project-folder-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="card empty-state">
+          <h3>
+            Nenhum projeto por responsável
+          </h3>
+          <p>
+            As pastas aparecem quando houver projetos cadastrados.
+          </p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
